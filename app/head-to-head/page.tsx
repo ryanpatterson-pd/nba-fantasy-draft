@@ -67,6 +67,15 @@ export default function HeadToHeadPage() {
         kicker="The ledger"
         title="Head to Head"
         copy={`${pairings.length} pairings across ${num(totalMeetings)} meetings. The complete matrix of who has beaten whom, playoff games included.`}
+        aside={
+          <Link
+            href="/head-to-head/compare"
+            className="inline-flex items-center gap-2 self-start rounded-full border border-accent-2/40 bg-accent-2/15 px-4 py-2.5 text-[0.72rem] font-black tracking-[0.14em] text-accent-2 uppercase transition-colors hover:bg-accent-2/25"
+          >
+            <Icon name="swap" size={14} strokeWidth={2.2} />
+            Compare managers
+          </Link>
+        }
       />
 
       {/* Mobile: one card at a time, swipe sideways. sm and up: the full grid. */}

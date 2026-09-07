@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CountUp } from '@/components/ui/CountUp';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { MascotImage } from '@/components/ui/MascotImage';
 import { getManager } from '@/lib/data/managers';
@@ -73,7 +74,7 @@ export function LeaderStatCard({
         </p>
 
         <p className="figure-lg min-w-0 truncate leading-none text-ink" title={value}>
-          {value}
+          <CountUp value={value} />
           {unit && (
             <span className="ml-1.5 text-[11px] font-bold tracking-[0.2px] text-ink-dim">{unit}</span>
           )}

@@ -141,6 +141,14 @@ export function ProfileHero({
             <ButtonLink href="/teams" variant="outline" size="sm" icon="users">
               Roster
             </ButtonLink>
+            <ButtonLink
+              href={`/head-to-head/compare?a=${manager.id}`}
+              variant="primary"
+              size="sm"
+              icon="swap"
+            >
+              Compare
+            </ButtonLink>
           </div>
 
           <dl className="mt-5 flex flex-1 flex-col justify-center divide-y divide-white/10">
