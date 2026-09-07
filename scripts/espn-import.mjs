@@ -12,7 +12,13 @@
  */
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 
-const ESPN_SEASON = Number(process.argv[2] ?? 2026);
+const args = process.argv.slice(2);
+// The live/upcoming season is imported in a separate mode: it has no completed
+// results, so the strict "derived record must equal ESPN" verification the
+// completed path runs would always fail. `--live` writes lib/data/upcoming.ts
+// instead of a completed-season file and skips that verification.
+const LIVE = args.includes('--live');
+const ESPN_SEASON = Number(args.find((a) => !a.startsWith('--')) ?? 2026);
 const LEAGUE = process.env.ESPN_LEAGUE_ID;
 
 if (!LEAGUE) {
@@ -29,7 +35,7 @@ const OWNERS = JSON.parse(readFileSync('scripts/espn-managers.json', 'utf8'));
 const swid = process.env.SWID.startsWith('{') ? process.env.SWID : `{${process.env.SWID}}`;
 const url =
   `https://lm-api-reads.fantasy.espn.com/apis/v3/games/fba/seasons/${ESPN_SEASON}` +
-  `/segments/0/leagues/${LEAGUE}?view=mTeam&view=mSettings&view=mMatchupScore`;
+  `/segments/0/leagues/${LEAGUE}?view=mTeam&view=mSettings&view=mMatchupScore&view=mScoreboard`;
 
 const response = await fetch(url, {
   headers: {
@@ -71,6 +77,178 @@ const label = `${startYear}/${String(ESPN_SEASON).slice(2)}`;
 if (!regularSeasonWeeks) {
   console.error('Could not read matchupPeriodCount from settings — aborting.');
   process.exit(1);
+}
+
+/* -------------------------------------------------- live / upcoming season */
+
+if (LIVE) {
+  importLiveSeason();
+  process.exit(0);
+}
+
+/**
+ * Writes lib/data/upcoming.ts from the in-progress season ESPN currently has
+ * open. Reads the real home-and-away draw, the real division split and each
+ * team's live record, and marks the season started once any game is decided.
+ *
+ * This is deliberately separate from the completed-season path below: an
+ * in-progress season is all zeros until games are played, so the strict
+ * record-verification the completed path runs cannot apply here. Nothing here
+ * touches the completed IMPORTED_SEASONS list, so the live season can never
+ * leak into history, records or all-time stats.
+ */
+function importLiveSeason() {
+  if (rawDivisions.length < 2) {
+    console.error(
+      `Expected ESPN divisions (conferences) but found ${rawDivisions.length}. Aborting live import.`,
+    );
+    process.exit(1);
+  }
+
+  const liveProblems = [];
+  const managerByTeam = new Map();
+  const conferenceByTeam = new Map();
+
+  const standings = (payload.teams ?? []).map((team) => {
+    const ownerSwid = (team.owners ?? [])[0];
+    const owner = OWNERS[ownerSwid];
+    if (!owner) {
+      liveProblems.push(
+        `Unknown owner SWID ${ownerSwid} for team ${team.id} "${team.name}" ` +
+          `(ESPN member: ${memberName(ownerSwid)}). Add it to scripts/espn-managers.json.`,
+      );
+      return null;
+    }
+
+    managerByTeam.set(team.id, owner.id);
+    conferenceByTeam.set(team.id, String(team.divisionId ?? ''));
+
+    const overall = team.record?.overall ?? {};
+    return {
+      managerId: owner.id,
+      conferenceId: String(team.divisionId ?? ''),
+      wins: overall.wins ?? 0,
+      losses: overall.losses ?? 0,
+      ties: overall.ties ?? 0,
+      pointsFor: Math.round(overall.pointsFor ?? 0),
+      pointsAgainst: Math.round(overall.pointsAgainst ?? 0),
+      ladderPosition: team.playoffSeed ?? 0,
+    };
+  });
+
+  if (liveProblems.length > 0) {
+    for (const problem of liveProblems) console.error(`ERROR: ${problem}`);
+    process.exit(1);
+  }
+
+  // Ladder order: seeded teams first (by seed), then the rest by wins then PF,
+  // so a pre-season ladder (all seed 0) still reads sensibly.
+  standings.sort(
+    (a, b) =>
+      (a.ladderPosition || 99) - (b.ladderPosition || 99) ||
+      b.wins - a.wins ||
+      b.pointsFor - a.pointsFor,
+  );
+
+  const raw = payload.schedule ?? [];
+  const fixtures = [];
+  for (const game of raw) {
+    // Only the home-and-away rounds — the upcoming view is the regular season.
+    if (game.matchupPeriodId > regularSeasonWeeks) continue;
+
+    const home = game.home ?? {};
+    const away = game.away ?? {};
+    if (home.teamId == null || away.teamId == null) continue; // bye placeholder
+
+    const homeId = managerByTeam.get(home.teamId);
+    const awayId = managerByTeam.get(away.teamId);
+    if (!homeId || !awayId) {
+      console.error(
+        `ERROR: live matchup references an unmapped team (${home.teamId} vs ${away.teamId}).`,
+      );
+      process.exit(1);
+    }
+
+    const winnerRaw = (game.winner ?? 'UNDECIDED').toUpperCase();
+    const winner =
+      winnerRaw === 'HOME'
+        ? 'home'
+        : winnerRaw === 'AWAY'
+          ? 'away'
+          : winnerRaw === 'TIE'
+            ? 'tie'
+            : 'undecided';
+
+    fixtures.push({
+      round: game.matchupPeriodId,
+      homeId,
+      homeScore: Math.round(home.totalPoints ?? 0),
+      awayId,
+      awayScore: Math.round(away.totalPoints ?? 0),
+      winner,
+    });
+  }
+
+  fixtures.sort((a, b) => a.round - b.round || a.homeId.localeCompare(b.homeId));
+
+  const started = fixtures.some((f) => f.winner !== 'undecided');
+
+  const liveConferences = rawDivisions.map((division) => ({
+    id: String(division.id),
+    name: (division.name ?? '').trim() || `Division ${division.id}`,
+  }));
+
+  const liveSeason = {
+    id: seasonId,
+    espnSeasonId: ESPN_SEASON,
+    label,
+    leagueName: settings.name ?? '',
+    regularSeasonWeeks,
+    playoffTeams,
+    started,
+    importedAt: new Date().toISOString(),
+    conferences: liveConferences,
+    fixtures,
+    standings,
+  };
+
+  const liveHeader = `// GENERATED by scripts/espn-import.mjs --live — do not edit by hand.
+// Source: ESPN league ${LEAGUE}, in-progress season ${ESPN_SEASON}. Imported ${new Date().toISOString().slice(0, 10)}.
+//
+// The live/upcoming season: ESPN's real fixtures, division split and running
+// ladder. NOT part of the completed IMPORTED_SEASONS, so it never reaches the
+// history, records or all-time stats. Re-run the import to refresh scores and
+// pick up any fixture changes.
+
+import type { LiveSeason } from '@/lib/data/imported';
+
+export const liveSeason: LiveSeason = ${JSON.stringify(liveSeason, null, 2)};
+`;
+
+  mkdirSync('lib/data', { recursive: true });
+  writeFileSync('lib/data/upcoming.ts', liveHeader);
+
+  const decided = fixtures.filter((f) => f.winner !== 'undecided').length;
+  const liveReport = [
+    `LIVE import — ${settings.name}`,
+    `Season: ${label}  (espnSeasonId ${ESPN_SEASON})`,
+    `Regular season weeks: ${regularSeasonWeeks}   Playoff teams: ${playoffTeams}`,
+    `Conferences: ${liveConferences.map((c) => c.name).join(', ')}`,
+    `Fixtures: ${fixtures.length}  (${decided} decided, ${fixtures.length - decided} to play)`,
+    `Season started: ${started ? 'yes' : 'no (pre-season, all fixtures undecided)'}`,
+    '',
+    'Ladder (as ESPN has it):',
+    ...standings.map(
+      (s, i) =>
+        `  ${String(i + 1).padStart(2)}. ${s.managerId.padEnd(7)} ` +
+        `${s.wins}-${s.losses}${s.ties ? `-${s.ties}` : ''}  PF ${s.pointsFor}  ` +
+        `[${liveConferences.find((c) => c.id === s.conferenceId)?.name ?? s.conferenceId}]`,
+    ),
+  ].join('\n');
+
+  writeFileSync('scripts/.espn-import-report.txt', liveReport);
+  console.log(liveReport);
+  console.log(`\nWrote lib/data/upcoming.ts`);
 }
 
 /* ------------------------------------------------------------------- teams */

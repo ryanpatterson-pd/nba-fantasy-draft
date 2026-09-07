@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { CountdownCard } from '@/components/dashboard/CountdownCard';
 import { UpcomingSeason } from '@/components/fixtures/UpcomingSeason';
 import { PageHeader, PageShell } from '@/components/layout/PageHeader';
-import { UPCOMING_CONFERENCES } from '@/lib/data/conferences';
+import { UPCOMING_CONFERENCES, UPCOMING_STANDINGS, UPCOMING_STARTED } from '@/lib/data/conferences';
 import { UPCOMING_PARTICIPANTS, UPCOMING_SEASON } from '@/lib/data/seasons';
 import { FORM_SEASON, previewFor } from '@/lib/fixtures/preview';
 import { UPCOMING_ROUNDS } from '@/lib/fixtures/schedule';
@@ -41,6 +41,8 @@ export default function UpcomingSeasonPage() {
         rounds={rounds}
         managerIds={UPCOMING_PARTICIPANTS}
         conferences={UPCOMING_CONFERENCES}
+        standings={UPCOMING_STANDINGS}
+        started={UPCOMING_STARTED}
         seasonLabel={UPCOMING_SEASON.label}
       />
     </PageShell>

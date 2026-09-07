@@ -75,6 +75,45 @@ Managers are matched by SWID via `scripts/espn-managers.json`. The importer **fa
 unrecognised SWID rather than inventing a manager — that is how it caught one manager holding two
 ESPN accounts, which would otherwise have split his career in half.
 
+### Keeping the upcoming season (`/upcoming`) up to date
+
+The **2026/27** tab shows ESPN's **real** fixtures and a live conference ladder, imported the same
+way — but with the `--live` flag, which writes a separate generated file:
+
+```bash
+node --env-file=.env.local scripts/espn-import.mjs 2027 --live
+```
+
+The argument is the ESPN season id (`2027` = the 2026/27 season). This reads the real home-and-away
+draw, ESPN's division split (East/West) and each team's running record, and writes
+`lib/data/upcoming.ts` plus the usual summary in `scripts/.espn-import-report.txt`.
+
+Key points:
+
+- **It is separate from completed seasons.** The live file is *not* part of the completed-season
+  history, so an in-progress season can never leak into the records, all-time ladder or head-to-head
+  matrix. Only the `/upcoming` page reads it.
+- **Re-run it whenever you want the site to reflect the latest games.** Each run overwrites
+  `lib/data/upcoming.ts` with ESPN's current state, so scores, records and the ladder move, and any
+  fixture ESPN reschedules is picked up exactly.
+- **Before the season starts** every fixture is shown as scheduled with a "hasn't started" notice on
+  the ladder; the notice clears automatically once any game has been decided (`started` flips true).
+- **If the live file is absent** (e.g. a fresh checkout before the first live import), the page falls
+  back to a provisional generated round-robin so it always renders.
+
+The typical in-season loop, roughly weekly:
+
+```bash
+node --env-file=.env.local scripts/espn-import.mjs 2027 --live
+git add lib/data/upcoming.ts
+git commit -m "Update 2026/27 fixtures and ladder"
+git push          # Vercel redeploys automatically
+```
+
+> On Windows, the importer may print `node: Assertion failed ... async.c` **after** it has written
+> the file and printed its report. That is a harmless Node/libuv teardown quirk on exit — if you saw
+> "Wrote lib/data/upcoming.ts", the import succeeded.
+
 ## How draft night works
 
 1. Games are defined in `lib/data/draft-games.ts`. Some are skill, some are pure luck.

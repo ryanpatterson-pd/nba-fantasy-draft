@@ -1,3 +1,4 @@
+import { liveSeason } from '@/lib/data/upcoming';
 import { getImportedSeason, UPCOMING_PARTICIPANTS, UPCOMING_SEASON } from '@/lib/data/seasons';
 
 /**
@@ -56,6 +57,56 @@ function importedConferences(): Conference[] | undefined {
   }));
 }
 
+/**
+ * Conferences from the imported live/upcoming season, if it has been imported.
+ *
+ * This is the real ESPN division split, with each conference's managers in
+ * ESPN's own ladder order.
+ */
+function liveConferences(): Conference[] | undefined {
+  if (!liveSeason.conferences?.length || !liveSeason.standings?.length) return undefined;
+
+  return liveSeason.conferences.map((conference) => ({
+    id: conference.id,
+    name: conference.name,
+    managerIds: liveSeason.standings
+      .filter((team) => team.conferenceId === conference.id)
+      .map((team) => team.managerId),
+  }));
+}
+
 /** The conferences shown on the upcoming-season ladder. */
 export const UPCOMING_CONFERENCES: Conference[] =
-  importedConferences() ?? provisionalConferences();
+  liveConferences() ?? importedConferences() ?? provisionalConferences();
+
+/** One team's row on the live conference ladder. */
+export type LadderStanding = {
+  managerId: string;
+  wins: number;
+  losses: number;
+  ties: number;
+  pointsFor: number;
+};
+
+/**
+ * Real standings per conference from the imported live season, keyed by
+ * conference id. Empty when the season has not been imported yet, in which case
+ * the ladder falls back to zeroed placeholder rows.
+ */
+export const UPCOMING_STANDINGS: Record<string, LadderStanding[]> = Object.fromEntries(
+  (liveSeason.conferences ?? []).map((conference) => [
+    conference.id,
+    (liveSeason.standings ?? [])
+      .filter((team) => team.conferenceId === conference.id)
+      .map((team) => ({
+        managerId: team.managerId,
+        wins: team.wins,
+        losses: team.losses,
+        ties: team.ties,
+        pointsFor: team.pointsFor,
+      })),
+  ]),
+);
+
+/** True once at least one game in the live season has been decided. */
+export const UPCOMING_STARTED: boolean = Boolean(liveSeason.started);

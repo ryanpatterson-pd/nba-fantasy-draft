@@ -19,6 +19,11 @@ import { cn } from '@/lib/utils/cn';
 
 export type RoundData = { round: number; previews: MatchPreview[] };
 export type ConferenceData = { id: string; name: string; managerIds: string[] };
+/** Real ladder rows per conference id, from the imported live season. */
+export type StandingsData = Record<
+  string,
+  { managerId: string; wins: number; losses: number; ties: number; pointsFor: number }[]
+>;
 
 type Tab = 'fixtures' | 'ladder';
 /** Sentinel for "no team filter". */
@@ -35,11 +40,15 @@ export function UpcomingSeason({
   rounds,
   managerIds,
   conferences,
+  standings,
+  started,
   seasonLabel,
 }: {
   rounds: RoundData[];
   managerIds: string[];
   conferences: ConferenceData[];
+  standings: StandingsData;
+  started: boolean;
   seasonLabel: string;
 }) {
   const [tab, setTab] = useState<Tab>('fixtures');
@@ -59,7 +68,12 @@ export function UpcomingSeason({
       {tab === 'fixtures' ? (
         <FixturesTab rounds={rounds} managerIds={managerIds} seasonLabel={seasonLabel} />
       ) : (
-        <LadderTab conferences={conferences} seasonLabel={seasonLabel} />
+        <LadderTab
+          conferences={conferences}
+          standings={standings}
+          started={started}
+          seasonLabel={seasonLabel}
+        />
       )}
     </div>
   );
@@ -448,47 +462,64 @@ type LadderRow = {
 
 /**
  * Live ladder for the upcoming season, split by conference the way ESPN runs
- * it. Empty until the season starts — every manager sits at 0–0 — then fills in
- * once the season is imported.
+ * it. Before the season starts every manager sits at 0–0 with a notice; once
+ * games are played and re-imported, the real ESPN records fill in.
  */
 function LadderTab({
   conferences,
+  standings,
+  started,
   seasonLabel,
 }: {
   conferences: ConferenceData[];
+  standings: StandingsData;
+  started: boolean;
   seasonLabel: string;
 }) {
-  const started = false; // No results until the season is played and imported.
-
   return (
     <div className="flex flex-col gap-4">
       {!started && (
         <div className="flex items-center gap-2 rounded-card border border-line bg-surface-2 px-4 py-3">
           <Icon name="clock" size={14} className="shrink-0 text-ink-mute" aria-hidden />
           <p className="text-[12.5px] font-semibold text-ink-dim">
-            The {seasonLabel} season hasn&apos;t started. Each conference ladder fills in from ESPN
-            once games are played.
+            The {seasonLabel} season hasn&apos;t started. Each conference ladder shows the ESPN
+            division line-up and fills in with records once games are played.
           </p>
         </div>
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         {conferences.map((conference) => (
-          <ConferenceLadder key={conference.id} conference={conference} />
+          <ConferenceLadder
+            key={conference.id}
+            conference={conference}
+            rows={standings[conference.id]}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function ConferenceLadder({ conference }: { conference: ConferenceData }) {
-  const rows: LadderRow[] = conference.managerIds.map((managerId) => ({
-    managerId,
-    wins: 0,
-    losses: 0,
-    ties: 0,
-    pointsFor: 0,
-  }));
+function ConferenceLadder({
+  conference,
+  rows: realRows,
+}: {
+  conference: ConferenceData;
+  rows?: LadderRow[];
+}) {
+  // Real imported standings when present; otherwise zeroed placeholder rows in
+  // the conference's line-up order.
+  const rows: LadderRow[] =
+    realRows && realRows.length > 0
+      ? realRows
+      : conference.managerIds.map((managerId) => ({
+          managerId,
+          wins: 0,
+          losses: 0,
+          ties: 0,
+          pointsFor: 0,
+        }));
 
   const columns: Column<LadderRow>[] = [
     {

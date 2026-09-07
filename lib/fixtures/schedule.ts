@@ -1,15 +1,18 @@
+import { liveSeason } from '@/lib/data/upcoming';
 import { UPCOMING_PARTICIPANTS, UPCOMING_SEASON } from '@/lib/data/seasons';
 import type { SeasonId } from '@/lib/types';
 
 /**
  * Fixture list for the upcoming season.
  *
- * IMPORTANT: these are **provisional**. ESPN does not publish a schedule until
- * the league has drafted, so this is a generated round-robin over the returning
- * field rather than the real fixture list. It is deterministic — the same field
- * always produces the same draw — so previews and links are stable between
- * builds. Once ESPN has the real schedule, import it the same way results are
- * imported and point the page at that instead.
+ * The real ESPN draw is imported into lib/data/upcoming.ts (see
+ * scripts/espn-import.mjs --live) and used when present, so the page shows
+ * exactly the fixtures ESPN has — and picks up any change on re-import.
+ *
+ * When that file has no fixtures (before the league exists on ESPN), this falls
+ * back to a **provisional** generated round-robin over the returning field. It
+ * is deterministic — the same field always produces the same draw — so previews
+ * and links stay stable between builds until the real schedule lands.
  */
 
 export type Fixture = {
@@ -95,12 +98,34 @@ export function buildSchedule(
   return rounds;
 }
 
-/** The generated draw for the upcoming season. */
-export const UPCOMING_ROUNDS: Round[] = buildSchedule(
-  UPCOMING_PARTICIPANTS,
-  UPCOMING_SEASON.regularSeasonWeeks,
-  UPCOMING_SEASON.id,
-);
+/** True when ESPN's real draw has been imported. */
+export const HAS_LIVE_SCHEDULE: boolean = (liveSeason.fixtures?.length ?? 0) > 0;
+
+/** Groups the imported live fixtures into rounds, in round order. */
+function liveRounds(): Round[] {
+  const byRound = new Map<number, Fixture[]>();
+  for (const fixture of liveSeason.fixtures) {
+    const list = byRound.get(fixture.round) ?? [];
+    list.push({
+      seasonId: liveSeason.id,
+      round: fixture.round,
+      homeId: fixture.homeId,
+      awayId: fixture.awayId,
+    });
+    byRound.set(fixture.round, list);
+  }
+  return [...byRound.keys()]
+    .sort((a, b) => a - b)
+    .map((round) => ({ round, fixtures: byRound.get(round) ?? [] }));
+}
+
+/**
+ * The draw for the upcoming season: ESPN's real fixtures when imported,
+ * otherwise the provisional generated round-robin.
+ */
+export const UPCOMING_ROUNDS: Round[] = HAS_LIVE_SCHEDULE
+  ? liveRounds()
+  : buildSchedule(UPCOMING_PARTICIPANTS, UPCOMING_SEASON.regularSeasonWeeks, UPCOMING_SEASON.id);
 
 export const UPCOMING_FIXTURES: Fixture[] = UPCOMING_ROUNDS.flatMap((round) => round.fixtures);
 
