@@ -174,3 +174,45 @@ scripts/
   espn-managers.json    SWID to manager id mapping
   espn-probe.mjs        raw endpoint inspection when the import looks wrong
 ```
+## Deployment
+
+The site is hosted on **Vercel** and connected to this GitHub repo, so deploys are automatic.
+
+- **Live site:** https://nbafantasy-hornpub.vercel.app
+- **Repo:** https://github.com/ryanpatterson-pd/nba-fantasy-draft
+
+### The deploy flow
+
+Vercel watches the `main` branch. Any push to `main` triggers a new production build and deploy —
+there is no separate deploy command to run.
+
+```bash
+git add -A
+git commit -m "your message"
+git push            # Vercel builds and deploys automatically
+```
+
+Pushing to any other branch (or opening a pull request) gets its own **preview** deployment on a
+temporary URL, so you can check a change before it reaches production.
+
+### Environment variables on Vercel
+
+Only one variable is set on Vercel:
+
+| Variable | Value | Why |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SITE_URL` | `https://nbafantasy-hornpub.vercel.app` | Builds the `metadataBase` for Open Graph / share-preview links in `app/layout.tsx`. |
+
+The `NEXT_PUBLIC_` prefix is required — the code reads `process.env.NEXT_PUBLIC_SITE_URL`. Vercel
+shows a warning that public-prefixed values are exposed to the browser and suggests removing the
+prefix. That warning is safe to dismiss here: the value is the site's own public address, not a
+secret. Never put a real secret (API key, token, password) behind `NEXT_PUBLIC_`, but a public URL
+is exactly what it is for. If the prefix is removed, the code will not find the variable and will
+silently fall back to `http://localhost:3000`, which would point share previews at localhost.
+
+### ESPN credentials stay local
+
+`ESPN_S2`, `SWID` and `ESPN_LEAGUE_ID` are **not** set on Vercel and must never be. They are only
+used by the local import scripts in `scripts/`, never at build or runtime. They live in `.env.local`
+(gitignored) and never leave your machine. To refresh league data: run the importer locally, then
+commit and push the regenerated files in `lib/data/seasons/` — Vercel redeploys with the new data.
