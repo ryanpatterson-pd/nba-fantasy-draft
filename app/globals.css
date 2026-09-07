@@ -1,0 +1,871 @@
+@import 'tailwindcss';
+
+/* ============================================================
+   TOKENS
+
+   Ported from the reference design system. Only the brand accent
+   differs: orange in place of red, and the dark surfaces are neutral
+   charcoal rather than navy.
+   ============================================================ */
+
+:root {
+  /* Brand */
+  --accent: #ef6511; /* primary accent */
+  --accent-2: #ff8534; /* gradient partner for the accent */
+  --accent-deep: #c2410c; /* accent text on light surfaces */
+  --accent-bg: #fff4ec;
+  --accent-border: #fed3b4;
+
+  /* Dark surfaces */
+  --dark: #16171d; /* sidebar gradient top, panel header strips */
+  --dark-deep: #0b0c10;
+  --dark-2: #1e2027;
+  --dark-3: #272a33;
+
+  /* ---- Ceremony palette ----
+     Purple and gold, used only where the league hands out silverware:
+     season history, the honour cards and the awards ceremony. Everything
+     else stays on charcoal and orange. */
+  --royal: #3b1e6e;
+  --royal-deep: #1e0f3a;
+  --royal-2: #5b2ea6;
+  --royal-ink: #f6f1ff;
+  --royal-ink-dim: #c6b3e6;
+  --gold: #d4af37;
+  --gold-2: #f4dd8a; /* lit highlight */
+  --gold-deep: #8a6a15; /* gold text on light surfaces */
+  --gold-bg: #fdf9ec;
+  --gold-border: #e7d6a2;
+
+  /* Light workspace */
+  --page-bg: #f4f7fb;
+  --surface: #ffffff;
+  --surface-subtle: #f8fafc;
+  --surface-hover: #f7faff;
+  --border: #e2e8f0;
+  --border-input: #dbe3ef;
+
+  /* Text */
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-label: #334155;
+
+  /* Text on dark surfaces */
+  --dark-text: #ffffff;
+  --dark-text-muted: #b7c2d4;
+  --dark-text-icon: #91a2bb;
+
+  /* Status tints */
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --green-border: #bbf7d0;
+  --orange: #f97316;
+  --orange-bg: #fff7ed;
+  --orange-border: #fed7aa;
+  --red: #e11d48;
+  --red-bg: #fff0f2;
+  --red-border: #fecdd3;
+
+  /* Radii */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* Elevation */
+  --shadow-card: 0 10px 30px rgba(15, 23, 42, 0.06);
+  --shadow-raised: 0 18px 42px rgba(15, 23, 42, 0.24);
+  --shadow-accent: 0 12px 26px color-mix(in oklab, var(--accent) 28%, transparent);
+
+  /* Family */
+  --font-ui: var(--font-inter), Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  /* Newsprint body copy, used only by the season reviews. System serifs, so
+     nothing extra is downloaded. */
+  --font-news: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia,
+    'Times New Roman', Times, serif;
+
+  /* Newsprint surfaces */
+  --news-paper: #f7f3ea;
+  --news-paper-2: #efe9dc;
+  --news-ink: #14120e;
+  --news-ink-dim: #4a4437;
+  --news-rule: #cec5b2;
+}
+
+/* ============================================================
+   TAILWIND THEME BRIDGE
+   ============================================================ */
+
+@theme inline {
+  --color-app: var(--page-bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-subtle);
+  --color-surface-3: var(--surface-hover);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-input);
+
+  --color-ink: var(--text);
+  --color-ink-dim: var(--text-muted);
+  --color-ink-mute: var(--text-label);
+
+  --color-dark: var(--dark);
+  --color-dark-2: var(--dark-2);
+  --color-dark-3: var(--dark-3);
+
+  --color-royal: var(--royal);
+  --color-royal-deep: var(--royal-deep);
+  --color-royal-2: var(--royal-2);
+  --color-royal-ink: var(--royal-ink);
+  --color-royal-ink-dim: var(--royal-ink-dim);
+  --color-gold: var(--gold);
+  --color-gold-2: var(--gold-2);
+  --color-gold-deep: var(--gold-deep);
+  --color-gold-bg: var(--gold-bg);
+  --color-gold-border: var(--gold-border);
+
+  --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-bg: var(--accent-bg);
+  --color-accent-border: var(--accent-border);
+
+  --color-positive: var(--green);
+  --color-positive-soft: var(--green-bg);
+  --color-positive-line: var(--green-border);
+  --color-warning: var(--orange);
+  --color-warning-soft: var(--orange-bg);
+  --color-warning-line: var(--orange-border);
+  --color-negative: var(--red);
+  --color-negative-soft: var(--red-bg);
+  --color-negative-line: var(--red-border);
+
+  --radius-tile: var(--radius-sm);
+  --radius-card: var(--radius-md);
+  --radius-panel: var(--radius-lg);
+  --radius-hero: var(--radius-xl);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-raised: var(--shadow-raised);
+  --shadow-accent: var(--shadow-accent);
+
+  --font-sans: var(--font-ui);
+  --font-display: var(--font-ui);
+  --font-mono: var(--font-mono);
+  --font-news: var(--font-news);
+
+  --color-news-paper: var(--news-paper);
+  --color-news-paper-2: var(--news-paper-2);
+  --color-news-ink: var(--news-ink);
+  --color-news-ink-dim: var(--news-ink-dim);
+  --color-news-rule: var(--news-rule);
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
+* {
+  box-sizing: border-box;
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: light;
+  scroll-behavior: smooth;
+  /* Clamp the whole document to the viewport width. The horizontal-overflow
+     bug on mobile is that some descendant is fractionally wider than the
+     viewport, and with no clamp here the entire page (sticky header included)
+     becomes draggable sideways. `overflow-x: clip` clamps at the true scroll
+     root WITHOUT creating a scroll container, so it neither breaks the sticky
+     mobile header nor makes the intentional inner overflow-x-auto swipe rows
+     unreachable — those keep their own scrolling. It must live on <html> (the
+     viewport scroll container); on <body> alone the overflow propagates up to
+     <html> and still scrolls. */
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  /* Applied globally — this is the single biggest contributor to the look. */
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+  letter-spacing: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-ui);
+  font-weight: 900;
+}
+
+h1 {
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+}
+
+h2,
+h3 {
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-input) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border-input);
+  border-radius: var(--radius-pill);
+  border: 3px solid var(--page-bg);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #c2ccdb;
+}
+
+/* ============================================================
+   DARK SUBTREES
+
+   `on-dark` rebinds the surface, text, border and accent-text tokens
+   to their dark equivalents, so the same utilities read correctly on
+   either background. Used by the sidebar, page headers, panel header
+   strips and banners.
+   ============================================================ */
+
+@utility on-dark {
+  --surface: var(--dark-2);
+  --surface-subtle: var(--dark-3);
+  --surface-hover: var(--dark-3);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-input: rgba(255, 255, 255, 0.14);
+  --text: var(--dark-text);
+  --text-muted: var(--dark-text-muted);
+  --text-label: var(--dark-text-icon);
+  /* On charcoal the brand orange has plenty of contrast, so accent text
+     can use it directly rather than the darkened tone. */
+  --accent-deep: var(--accent-2);
+  --accent-bg: rgba(255, 255, 255, 0.065);
+  --accent-border: rgba(255, 255, 255, 0.1);
+  color: var(--dark-text);
+}
+
+/* Sidebar surface: accent glow at the top over a near-black gradient. */
+@utility rail-wash {
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      color-mix(in oklab, var(--accent) 24%, transparent),
+      transparent 30%
+    ),
+    linear-gradient(180deg, var(--dark) 0%, var(--dark-deep) 72%, #04050a 100%);
+}
+
+/* ============================================================
+   CEREMONY SUBTREES
+
+   `on-royal` is the purple counterpart to `on-dark`: it rebinds the
+   same tokens so shared utilities (panel-title, label-xs, tbl-head,
+   border-line) read correctly on purple, with gold standing in for the
+   accent. Pair it with a background — royal-wash or bg-royal-deep.
+   ============================================================ */
+
+@utility on-royal {
+  --surface: color-mix(in oklab, var(--royal) 78%, #000);
+  --surface-subtle: rgba(255, 255, 255, 0.06);
+  --surface-hover: rgba(255, 255, 255, 0.1);
+  --border: rgba(246, 241, 255, 0.14);
+  --border-input: rgba(246, 241, 255, 0.24);
+  --text: var(--royal-ink);
+  --text-muted: var(--royal-ink-dim);
+  --text-label: var(--gold);
+  /* Gold is the accent inside a ceremony subtree. */
+  --accent: var(--gold);
+  --accent-2: var(--gold-2);
+  --accent-deep: var(--gold-2);
+  --accent-bg: rgba(212, 175, 55, 0.15);
+  --accent-border: rgba(212, 175, 55, 0.42);
+  color: var(--royal-ink);
+}
+
+/* Ceremony header strip: deep purple with gold light raking in from the right. */
+@utility royal-wash {
+  background:
+    radial-gradient(
+      130% 200% at 100% 0%,
+      color-mix(in oklab, var(--gold) 30%, transparent) 0%,
+      transparent 58%
+    ),
+    linear-gradient(90deg, var(--royal-deep) 0%, var(--royal) 64%, var(--royal-2) 100%);
+}
+
+/* Deeper, quieter purple for the body of a ceremony panel. */
+@utility royal-deep-wash {
+  background:
+    radial-gradient(
+      100% 130% at 0% 0%,
+      color-mix(in oklab, var(--royal-2) 45%, transparent) 0%,
+      transparent 62%
+    ),
+    linear-gradient(165deg, var(--royal-deep) 0%, #150a29 100%);
+}
+
+/* ============================================================
+   NEWSPRINT
+
+   Used only by the season reviews. Rebinds the shared tokens the way
+   `on-dark` does, so ordinary utilities keep working, then adds the
+   handful of typographic details that make a page read as a paper:
+   serif body copy, columns, a drop cap and hairline rules.
+   ============================================================ */
+
+@utility newsprint {
+  --surface: var(--news-paper);
+  --surface-subtle: var(--news-paper-2);
+  --surface-hover: var(--news-paper-2);
+  --border: var(--news-rule);
+  --border-input: var(--news-rule);
+  --text: var(--news-ink);
+  --text-muted: var(--news-ink-dim);
+  --text-label: var(--news-ink-dim);
+  --accent-deep: #8c2f10;
+  --accent-bg: #f1e7d8;
+  --accent-border: var(--news-rule);
+  color: var(--news-ink);
+  background:
+    /* Faint fibre so the paper is not a flat block of cream. */
+    radial-gradient(circle at 18% 12%, rgba(0, 0, 0, 0.022) 0 1px, transparent 1px),
+    radial-gradient(circle at 72% 58%, rgba(0, 0, 0, 0.018) 0 1px, transparent 1px),
+    linear-gradient(170deg, #faf7f0 0%, var(--news-paper) 45%, var(--news-paper-2) 100%);
+  background-size:
+    22px 22px,
+    31px 31px,
+    100% 100%;
+}
+
+/* Serif body copy. */
+@utility news-body {
+  font-family: var(--font-news);
+  font-size: 15.5px;
+  line-height: 1.65;
+  letter-spacing: 0;
+  color: var(--news-ink);
+}
+
+/* Two- then three-column broadsheet text. */
+@utility news-columns {
+  column-gap: 30px;
+  column-rule: 1px solid var(--news-rule);
+}
+
+/* Oversized opening capital on the lead paragraph. */
+@utility news-dropcap {
+  &::first-letter {
+    float: left;
+    margin: 6px 8px 0 0;
+    font-family: var(--font-news);
+    font-size: 58px;
+    font-weight: 700;
+    line-height: 0.72;
+    color: var(--news-ink);
+  }
+}
+
+/* Masthead nameplate: heavy, tight, all caps. */
+@utility news-masthead {
+  font-family: var(--font-news);
+  font-weight: 700;
+  font-size: clamp(30px, 6.4vw, 62px);
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--news-ink);
+}
+
+/* Story headline. */
+@utility news-headline {
+  font-family: var(--font-news);
+  font-weight: 700;
+  font-size: clamp(26px, 4.4vw, 44px);
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--news-ink);
+}
+
+/* Section heading inside the paper. */
+@utility news-subhead {
+  font-family: var(--font-news);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--news-ink);
+}
+
+/* Wide-tracked sans micro caps for datelines and labels. */
+@utility news-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--news-ink-dim);
+}
+
+/* The classic thick/thin rule pair under a nameplate. */
+@utility news-rule-double {
+  border-top: 3px solid var(--news-ink);
+  border-bottom: 1px solid var(--news-ink);
+  height: 4px;
+}
+
+/* Gold hairline that fades out at both ends — the vintage divider. */
+@utility gold-rule {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gold) 20%,
+    var(--gold-2) 50%,
+    var(--gold) 80%,
+    transparent 100%
+  );
+}
+
+/* Solid gold edge for the top of a ceremony card. */
+@utility gold-edge {
+  background: linear-gradient(90deg, var(--gold-deep) 0%, var(--gold-2) 50%, var(--gold-deep) 100%);
+}
+
+/* Engraved ceremony label: wide-tracked micro caps in gold. */
+@utility ceremony-label {
+  color: var(--gold);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1.7px;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+/* Gold medallion, the ceremony counterpart to icon-medallion. */
+@utility gold-medallion {
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  color: #2a1707;
+  background: linear-gradient(155deg, var(--gold-2) 0%, var(--gold) 55%, #a9821c 100%);
+  border: 1px solid color-mix(in oklab, var(--gold-2) 70%, #fff);
+  box-shadow:
+    0 6px 16px rgba(212, 175, 55, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+/* Hollow version, for the placings behind the winner. */
+@utility gold-medallion-hollow {
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  color: var(--gold-2);
+  background: rgba(212, 175, 55, 0.14);
+  border: 1px solid rgba(212, 175, 55, 0.45);
+}
+
+/* Premium page-header backdrop: a dark arena with cool light spilling from the
+   left and warm amber light from the right, over faint court lines. Reads as a
+   cinematic photo even before a real background image is dropped in. */
+@utility arena-wash {
+  background:
+    /* warm amber glow, top-right (the arena lights) */
+    radial-gradient(
+      90% 140% at 92% 0%,
+      color-mix(in oklab, var(--accent) 55%, #000) 0%,
+      color-mix(in oklab, var(--accent) 16%, #000) 26%,
+      transparent 60%
+    ),
+    /* cool light, top-left */
+    radial-gradient(70% 120% at 6% 4%, rgba(120, 150, 210, 0.18) 0%, transparent 52%),
+    /* soft floor glow */
+    radial-gradient(120% 80% at 78% 108%, rgba(255, 133, 52, 0.14) 0%, transparent 55%),
+    /* base near-black gradient */
+    linear-gradient(120deg, #0a0b10 0%, #101116 42%, #16171d 100%);
+}
+
+/* Faint court arcs, layered over arena-wash via a pseudo element. */
+@utility court-lines {
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image:
+      radial-gradient(60% 120% at 12% 118%, transparent 39%, rgba(212, 175, 55, 0.14) 40%, transparent 41%),
+      radial-gradient(38% 80% at 12% 118%, transparent 39%, rgba(212, 175, 55, 0.1) 40%, transparent 41%),
+      linear-gradient(90deg, transparent 0%, transparent 49.6%, rgba(212, 175, 55, 0.06) 50%, transparent 50.4%);
+  }
+}
+
+/* Page header / banner: charcoal fading into the accent on the right. */
+@utility dark-wash {
+  background:
+    radial-gradient(
+      130% 210% at 100% 50%,
+      color-mix(in oklab, var(--accent) 42%, #000) 0%,
+      color-mix(in oklab, var(--accent) 10%, #000) 42%,
+      transparent 68%
+    ),
+    linear-gradient(90deg, #0a0b10 0%, var(--dark) 58%, var(--dark) 100%);
+}
+
+/* ============================================================
+   SPLASH / LOADING SCREEN
+   The branded intro overlay (components/layout/SplashScreen.tsx).
+   ============================================================ */
+
+@keyframes hp-splash-logo-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+    filter: blur(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes hp-splash-word-in {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* The loading bar fills left to right, then holds. */
+@keyframes hp-splash-bar {
+  0% {
+    transform: scaleX(0);
+  }
+  70% {
+    transform: scaleX(0.92);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+/* A slow band of light sweeping across the field. */
+@keyframes hp-splash-sheen {
+  0% {
+    transform: translateX(-120%) skewX(-16deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%) skewX(-16deg);
+    opacity: 0;
+  }
+}
+
+.hp-splash-logo {
+  animation: hp-splash-logo-in 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hp-splash-word {
+  animation: hp-splash-word-in 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 240ms;
+}
+
+.hp-splash-bar {
+  transform-origin: left center;
+  animation: hp-splash-bar 1500ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: 260ms;
+}
+
+.hp-splash-sheen {
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.08) 48%,
+    rgba(255, 133, 52, 0.12) 52%,
+    transparent 70%
+  );
+  animation: hp-splash-sheen 2200ms ease-in-out 300ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hp-splash-logo,
+  .hp-splash-word,
+  .hp-splash-bar,
+  .hp-splash-sheen {
+    animation: none;
+  }
+  .hp-splash-bar {
+    transform: scaleX(1);
+  }
+}
+
+/* ============================================================
+   TYPE SCALE
+   ============================================================ */
+
+/* Small accent label above a heading. */
+@utility eyebrow {
+  margin: 0;
+  color: var(--accent-deep);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+/* Micro caps: banner labels, captions, column groupings. */
+@utility label-xs {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+
+/* Stat card title. Dark and title-case, not a micro cap. */
+@utility kpi-title {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* The small grey unit that sits inline, right of a big figure. */
+@utility kpi-unit {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+
+/* Table column headers.
+   Named `tbl-*` rather than `table-*` so it never collides with Tailwind's own
+   `table-cell` / `table-header-group` display utilities — that clash silently
+   broke responsive `md:table-cell` reveals inside DataTable. */
+@utility tbl-head {
+  color: var(--text-label);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.85px;
+  text-transform: uppercase;
+}
+
+/* Table body cells. */
+@utility tbl-cell {
+  font-weight: 750;
+}
+
+/* Card / panel heading. */
+@utility panel-title {
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+/* Larger card heading, as used above a section of content. */
+@utility card-title {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--text);
+}
+
+/* Navigation and control label. */
+@utility nav-label {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+/* The big number on a KPI card. */
+@utility figure-lg {
+  font-size: clamp(24px, 1.9vw, 30px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Banner figure — the one oversized number per page. */
+@utility figure-xl {
+  font-size: clamp(28px, 2.6vw, 38px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+@utility body-copy {
+  max-width: 720px;
+  line-height: 1.6;
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* ============================================================
+   COMPONENT PATTERNS
+   ============================================================ */
+
+/* Tinted circular icon medallion. */
+@utility icon-medallion {
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  color: var(--accent-deep);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+}
+
+/* Status / meta pill. */
+@utility pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Solid accent fill with a lit top edge — active nav, primary buttons. */
+@utility accent-solid {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    var(--shadow-accent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+/* Tinted accent chip, no elevation. */
+@utility accent-chip {
+  background: var(--accent-bg);
+  color: var(--accent-deep);
+  border: 1px solid var(--accent-border);
+}
+
+/* ============================================================
+   ANIMATION
+   ============================================================ */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 9px color-mix(in oklab, var(--accent) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 0%, transparent);
+  }
+}
+
+@utility animate-rise {
+  animation: rise 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@utility animate-pulse-ring {
+  animation: pulse-ring 2.4s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+
+  [data-print-hide] {
+    display: none !important;
+  }
+}

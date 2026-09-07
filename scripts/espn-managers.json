@@ -1,0 +1,23 @@
+{
+  "_comment": "ESPN owner SWID -> manager id. Add a line when someone new joins. The importer fails loudly on an unknown SWID rather than silently dropping a team. Note that one person can have several SWIDs if they made a new ESPN account — map them all to the same manager id so their career stays joined up.",
+
+  "{A3999E47-2D4D-4977-827D-5DEEDA6F217E}": { "id": "ryan", "name": "Ryan", "fullName": "Ryan Patterson" },
+  "{682FA5D3-50AA-4261-90AC-7D57D7F59DEE}": { "id": "andrew", "name": "Andrew", "fullName": "Andrew Starling" },
+  "{FD5CC7E7-5AA4-4FC5-A4C8-15EBB16DEE77}": { "id": "jason", "name": "Jason", "fullName": "Jason Galbis" },
+  "{05A3BCFA-7328-419E-9388-BD6A72EC9634}": { "id": "dylan", "name": "Dylan", "fullName": "Dylan Cameron" },
+  "{DC7C5BEB-E252-45E2-B56D-7DBBFC95ADE5}": { "id": "daniel", "name": "Daniel", "fullName": "Daniel Starling" },
+  "{4934BB3B-2A7A-42BE-B161-1DD43250B87D}": { "id": "tuan", "name": "Tuan", "fullName": "Tuan Le" },
+  "{F5830424-3BB9-4165-8B86-BE94A794889D}": { "id": "izzy", "name": "Izzy", "fullName": "Isaiah Luzares" },
+  "{0D031D3A-5F8D-459A-999E-B0450037BE64}": { "id": "nathan", "name": "Nathan", "fullName": "Nathan Moore" },
+  "{EBB82002-9500-4293-9229-C499211B8795}": { "id": "tyler", "name": "Tyler", "fullName": "Tyler Halls-Ferguson" },
+  "{C57001A7-241E-476B-AD25-1C647B0A219B}": { "id": "laven", "name": "Laven", "fullName": "Laven Nathan" },
+  "{E6B25B18-0BEE-42B5-9C0A-31C7FE3931AC}": { "id": "luke", "name": "Luke", "fullName": "Luke Levey" },
+
+  "_comment_aaron": "Aaron has two ESPN accounts — both map to the same manager.",
+  "{C6965259-99AD-4DE4-83BF-1213B58C19FB}": { "id": "aaron", "name": "Aaron", "fullName": "Aaron Sutherland" },
+  "{BABC3E7E-D704-41CB-83FE-57FCFDB8B23A}": { "id": "aaron", "name": "Aaron", "fullName": "Aaron Sutherland" },
+
+  "_comment_former": "Played earlier seasons only.",
+  "{8FBB2D7F-79E1-4F14-994B-D1B304B85498}": { "id": "titian", "name": "Titian", "fullName": "Titian Nheu" },
+  "{4D715AEF-77F5-4484-A428-BA61DB77214A}": { "id": "imran", "name": "Imran", "fullName": "Imran Nishib" }
+}
