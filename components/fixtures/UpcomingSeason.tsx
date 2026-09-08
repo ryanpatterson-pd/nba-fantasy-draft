@@ -8,6 +8,7 @@ import { DataTable, type Column } from '@/components/ui/DataTable';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Icon } from '@/components/ui/Icon';
 import { MascotImage } from '@/components/ui/MascotImage';
+import { MascotZoomButton } from '@/components/ui/MascotZoomButton';
 import { Segmented } from '@/components/ui/Segmented';
 import { getManager } from '@/lib/data/managers';
 import type { Manager } from '@/lib/types';
@@ -363,6 +364,8 @@ function ListTeamPanel({
             : 'bg-gradient-to-l from-transparent via-transparent to-black/45',
         )}
       />
+
+      <MascotZoomButton managerId={manager.id} />
 
       {favoured && (
         <span

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { MascotImage } from '@/components/ui/MascotImage';
+import { MascotZoomButton } from '@/components/ui/MascotZoomButton';
 import { getManager } from '@/lib/data/managers';
 import type { PlayoffBracket } from '@/lib/stats/season';
 import { teamNameFor } from '@/lib/stats/season';
@@ -236,6 +237,7 @@ function TeamStrip({
           imgClassName={cn('object-top', dim && 'grayscale-[0.7] opacity-70')}
         />
         <span aria-hidden className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-[#0b0c10]" />
+        <MascotZoomButton managerId={manager.id} />
 
         {/* Mobile: the name sits at the bottom-left of the image itself, since
             the wider centre panel is hidden on small screens. */}

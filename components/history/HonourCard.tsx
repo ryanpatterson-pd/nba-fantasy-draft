@@ -1,4 +1,5 @@
 import { MascotImage } from '@/components/ui/MascotImage';
+import { MascotZoomButton } from '@/components/ui/MascotZoomButton';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { getManager } from '@/lib/data/managers';
 import { cn } from '@/lib/utils/cn';
@@ -88,6 +89,7 @@ export function HonourCard({
                 className="absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_0%,rgba(255,133,52,0.25),transparent_60%)]"
               />
             )}
+            <MascotZoomButton managerId={manager.id} caption={detail} />
           </>
         ) : (
           <span className="absolute inset-0 grid place-items-center text-3xl font-black text-white/25">

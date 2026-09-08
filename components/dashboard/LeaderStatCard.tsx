@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { CountUp } from '@/components/ui/CountUp';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { LeagueLogo } from '@/components/layout/LeagueLogo';
-import { MascotImage } from '@/components/ui/MascotImage';
+import { ZoomableMascot } from '@/components/ui/ZoomableMascot';
 import { getManager } from '@/lib/data/managers';
 import { cn } from '@/lib/utils/cn';
 
@@ -45,25 +45,12 @@ export function LeaderStatCard({
   );
 
   const square = manager ? (
-    // Manager mascot on their team colour.
-    <div
-      className="relative aspect-square w-[86px] shrink-0 overflow-hidden sm:w-[92px]"
-      style={{
-        background: `linear-gradient(150deg, ${manager.colours.primary}, color-mix(in oklab, ${manager.colours.primary} 50%, #000))`,
-      }}
-    >
-      <span
-        aria-hidden
-        className="absolute inset-0 grid place-items-center text-4xl font-black text-white/20 select-none"
-      >
-        {manager.name[0].toUpperCase()}
-      </span>
-      <MascotImage managerId={manager.id} alt={manager.name} sizes="92px" imgClassName="object-top" />
-      <span
-        aria-hidden
-        className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/25"
-      />
-    </div>
+    // Manager mascot on their team colour — clicking the photo opens the lightbox.
+    <ZoomableMascot
+      managerId={manager.id}
+      className="aspect-square w-[86px] shrink-0 sm:w-[92px]"
+      imgClassName="object-top"
+    />
   ) : (
     // League-wide: the HornPub shield on the brand dark.
     <div className="relative aspect-square w-[86px] shrink-0 overflow-hidden bg-dark sm:w-[92px]">

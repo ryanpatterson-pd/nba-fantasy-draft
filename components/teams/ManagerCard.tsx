@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { MascotImage } from '@/components/ui/MascotImage';
+import { MascotZoomButton } from '@/components/ui/MascotZoomButton';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { getManager } from '@/lib/data/managers';
 import { COMPLETED_SEASONS } from '@/lib/data/seasons';
@@ -63,12 +64,15 @@ export function ManagerCard({ row }: { row: AllTimeRecord }) {
 
         <div
           aria-hidden
-          className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/25"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-black/25"
         />
+
+        {/* Tap the photo to open it full size (over the card's profile link). */}
+        <MascotZoomButton managerId={manager.id} caption={teamName ?? undefined} />
 
         {/* Championship rings, top-right. Clickable to view full size. */}
         {rings.length > 0 && (
-          <div className="absolute top-2.5 right-2.5 z-[2] flex items-center gap-1">
+          <div className="absolute top-2.5 right-2.5 z-[4] flex items-center gap-1">
             {rings.map((ring) => (
               <RingBadge key={ring.image} label={ring.label} image={ring.image} />
             ))}

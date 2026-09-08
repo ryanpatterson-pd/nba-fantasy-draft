@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { MascotImage } from '@/components/ui/MascotImage';
+import { MascotZoomButton } from '@/components/ui/MascotZoomButton';
 import { MANAGERS, getManager } from '@/lib/data/managers';
 import { compareManagers, type Side } from '@/lib/stats/compare';
 import { cn } from '@/lib/utils/cn';
@@ -171,6 +172,9 @@ function FaceoffSide({
               : 'bg-gradient-to-l from-transparent via-transparent to-black/45',
           )}
         />
+
+        {/* Tap the mascot to open it full size. */}
+        <MascotZoomButton managerId={manager.id} />
 
         {/* Name + nickname over the photo. */}
         <div className={cn('absolute inset-x-0 bottom-0 z-[2] p-3 sm:p-4', align === 'right' && 'text-right')}>

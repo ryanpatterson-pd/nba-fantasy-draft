@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { MascotImage } from '@/components/ui/MascotImage';
+import { MascotZoomButton } from '@/components/ui/MascotZoomButton';
 import { getManager } from '@/lib/data/managers';
 import { COMPLETED_SEASONS } from '@/lib/data/seasons';
 import { bracketFor, championOf, minorPremierOf, runnerUpOf, woodenSpoonOf } from '@/lib/stats/season';
@@ -278,6 +279,8 @@ function SquareMascot({
           className="absolute inset-0 bg-[radial-gradient(120%_80%_at_50%_0%,rgba(244,221,138,0.28),transparent_55%)]"
         />
       )}
+
+      <MascotZoomButton managerId={manager.id} />
     </span>
   );
 }
