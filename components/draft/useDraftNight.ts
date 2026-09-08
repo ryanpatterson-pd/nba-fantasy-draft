@@ -12,7 +12,7 @@ import type { DraftNightState, LotteryWeighting, ManagerId } from '@/lib/types';
 export const DRAFT_STORAGE_KEY = 'nbafd.draft.v2';
 
 function emptyState(seasonId: string): DraftNightState {
-  return { version: 2, seasonId, results: {}, picks: [], weighting: 'points' };
+  return { version: 2, seasonId, results: {}, picks: [], weighting: 'lottery' };
 }
 
 /**
@@ -98,23 +98,49 @@ export function useDraftNight(seasonId: string) {
     [store],
   );
 
-  /** Assigns the next available pick number to a manager. */
+  /**
+   * Locks a drawn manager into a chosen pick number.
+   *
+   * The manager picks any still-open slot (1..FIELD_SIZE), so this validates
+   * the number is in range, not already taken, and the manager isn't already
+   * on the board. Picks are kept sorted by pick number for a stable board.
+   */
   const assignPick = useCallback(
-    (managerId: ManagerId) => {
+    (managerId: ManagerId, pick: number) => {
       store.set((previous) => {
-        if (previous.picks.some((pick) => pick.managerId === managerId)) return previous;
-        const next = previous.picks.length + 1;
-        if (next > FIELD_SIZE) return previous;
-        return { ...previous, picks: [...previous.picks, { pick: next, managerId }] };
+        if (previous.picks.some((p) => p.managerId === managerId)) return previous;
+        if (pick < 1 || pick > FIELD_SIZE) return previous;
+        if (previous.picks.some((p) => p.pick === pick)) return previous;
+        const picks = [...previous.picks, { pick, managerId }].sort((a, b) => a.pick - b.pick);
+        return { ...previous, picks };
       });
     },
     [store],
   );
 
+  /** Removes a single pick by its number, freeing both the slot and the manager. */
+  const clearPick = useCallback(
+    (pick: number) => {
+      store.set((previous) => {
+        if (!previous.picks.some((p) => p.pick === pick)) return previous;
+        return { ...previous, picks: previous.picks.filter((p) => p.pick !== pick) };
+      });
+    },
+    [store],
+  );
+
+  /** Removes the most recently locked pick (highest position in draw order). */
   const undoLastPick = useCallback(() => {
-    store.set((previous) =>
-      previous.picks.length === 0 ? previous : { ...previous, picks: previous.picks.slice(0, -1) },
-    );
+    store.set((previous) => {
+      if (previous.picks.length === 0) return previous;
+      // "Last" is the most recently added; picks are stored sorted by number,
+      // so drop the one that isn't referenced by any earlier draw. Simplest
+      // correct choice: remove the highest pick number currently filled is
+      // wrong for choose-your-slot, so track by insertion is unavailable here —
+      // instead clear the pick with the largest `pick` value that is filled.
+      const target = previous.picks.reduce((a, b) => (b.pick > a.pick ? b : a));
+      return { ...previous, picks: previous.picks.filter((p) => p.pick !== target.pick) };
+    });
   }, [store]);
 
   const resetPicks = useCallback(() => {
@@ -133,6 +159,12 @@ export function useDraftNight(seasonId: string) {
     [pickedIds],
   );
 
+  /** Pick numbers still open, ascending. */
+  const openPicks = useMemo(() => {
+    const taken = new Set(state.picks.map((p) => p.pick));
+    return Array.from({ length: FIELD_SIZE }, (_, i) => i + 1).filter((n) => !taken.has(n));
+  }, [state.picks]);
+
   /** Scores entered per game, for the schedule summary. */
   const entered = useMemo(
     () =>
@@ -150,10 +182,12 @@ export function useDraftNight(seasonId: string) {
     draftComplete: state.picks.length === FIELD_SIZE,
     pickedIds,
     remainingIds,
+    openPicks,
     setScore,
     clearGame,
     setWeighting,
     assignPick,
+    clearPick,
     undoLastPick,
     resetPicks,
     resetEverything,

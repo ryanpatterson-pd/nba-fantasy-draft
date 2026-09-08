@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DraftBoard } from '@/components/draft/DraftBoard';
 import { DraftLadder } from '@/components/draft/DraftLadder';
+import { FinalReveal } from '@/components/draft/FinalReveal';
 import { GameCard } from '@/components/draft/GameCard';
 import { LotteryWheel } from '@/components/draft/LotteryWheel';
 import { OddsPanel } from '@/components/draft/OddsPanel';
@@ -26,6 +27,7 @@ import {
 } from '@/lib/draft/scoring';
 import { getManager } from '@/lib/data/managers';
 import { num } from '@/lib/utils/format';
+import { cn } from '@/lib/utils/cn';
 
 type Tab = 'games' | 'ladder' | 'lottery' | 'board';
 
@@ -46,25 +48,59 @@ const TABS: { value: Tab; label: string }[] = [
 export function DraftHub({ seasonId }: { seasonId: string }) {
   const draft = useDraftNight(seasonId);
   const [tab, setTab] = useState<Tab>('games');
-  const [reveal, setReveal] = useState<{ managerId: string; pick: number; chance: number | null } | null>(
-    null,
-  );
+  // A team has been drawn and is choosing a slot. Nothing is locked until they
+  // confirm, so this holds only the drawn manager and their draw odds.
+  const [reveal, setReveal] = useState<{ managerId: string; chance: number | null } | null>(null);
+  const [soundOn, setSoundOn] = useState(true);
+  const [presenting, setPresenting] = useState(false);
+  const [showFinal, setShowFinal] = useState(false);
+  const stageRef = useRef<HTMLDivElement>(null);
 
   const odds = useMemo(
     () => computeOdds(draft.standings, draft.state.weighting, draft.remainingIds),
     [draft.standings, draft.state.weighting, draft.remainingIds],
   );
 
-  const nextPick = draft.draftComplete ? null : draft.state.picks.length + 1;
+  const picksMade = draft.state.picks.length;
+  const nextPick = draft.draftComplete ? null : picksMade + 1;
   const leader = draft.standings[0];
   const remainingPoints = pointsRemaining(draft.state.results);
 
-  function handleResult(managerId: string) {
-    const chance = odds.find((row) => row.managerId === managerId)?.chance ?? null;
-    const pick = draft.state.picks.length + 1;
-    draft.assignPick(managerId);
-    setReveal({ managerId, pick, chance });
-  }
+  /** A team has come out of the barrel — open the choose-your-slot reveal. */
+  const handleResult = useCallback(
+    (managerId: string) => {
+      const chance = odds.find((row) => row.managerId === managerId)?.chance ?? null;
+      setReveal({ managerId, chance });
+    },
+    [odds],
+  );
+
+  /** The drawn team confirmed a slot: lock it and close the reveal. */
+  const handleChoose = useCallback(
+    (pick: number) => {
+      if (reveal) draft.assignPick(reveal.managerId, pick);
+      setReveal(null);
+    },
+    [draft, reveal],
+  );
+
+  // Fullscreen presentation mode. Kept in sync with the browser's own state so
+  // pressing Escape (which exits fullscreen) also drops out of presenting.
+  const togglePresent = useCallback(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    if (!document.fullscreenElement) {
+      el.requestFullscreen?.().then(() => setPresenting(true)).catch(() => setPresenting(true));
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    const onChange = () => setPresenting(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', onChange);
+    return () => document.removeEventListener('fullscreenchange', onChange);
+  }, []);
 
   // Hold the UI back for one tick while the saved state is read, otherwise the
   // first paint would show an empty ladder before the real results arrive.
@@ -112,14 +148,14 @@ export function DraftHub({ seasonId }: { seasonId: string }) {
           icon="wheel"
         />
         <StatCard
-          label="Picks drawn"
-          value={`${draft.state.picks.length}/${FIELD_SIZE}`}
-          unit={nextPick ? `pick ${nextPick} next` : 'order locked'}
+          label="Picks locked"
+          value={`${picksMade}/${FIELD_SIZE}`}
+          unit={draft.draftComplete ? 'order locked' : `${FIELD_SIZE - picksMade} to draw`}
           icon="target"
         />
       </section>
 
-      {/* Tabs + reset */}
+      {/* Tabs + controls */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Segmented options={TABS} value={tab} onChange={setTab} ariaLabel="Draft night sections" />
         <div className="flex flex-wrap items-center gap-2">
@@ -130,9 +166,17 @@ export function DraftHub({ seasonId }: { seasonId: string }) {
           <Button
             variant="ghost"
             size="sm"
+            icon={soundOn ? 'bolt' : 'minus'}
+            onClick={() => setSoundOn((on) => !on)}
+          >
+            {soundOn ? 'Sound on' : 'Muted'}
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
             icon="minus"
             onClick={draft.undoLastPick}
-            disabled={draft.state.picks.length === 0}
+            disabled={picksMade === 0}
           >
             Undo pick
           </Button>
@@ -143,6 +187,7 @@ export function DraftHub({ seasonId }: { seasonId: string }) {
             onClick={() => {
               if (window.confirm('Clear every game result and the draft board for this weekend?')) {
                 draft.resetEverything();
+                setShowFinal(false);
               }
             }}
           >
@@ -205,7 +250,16 @@ export function DraftHub({ seasonId }: { seasonId: string }) {
 
       {tab === 'lottery' && (
         <section className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-          <Card className="flex items-center justify-center p-6">
+          {/* The stage — this is what goes fullscreen in presentation mode. */}
+          <div
+            ref={stageRef}
+            className={cn(
+              'relative flex items-center justify-center rounded-panel',
+              presenting
+                ? 'on-dark rail-wash min-h-screen w-full p-6'
+                : 'border border-line bg-surface p-6 shadow-card',
+            )}
+          >
             {draft.completedGameIds.length === 0 ? (
               <EmptyState
                 icon="dice"
@@ -218,14 +272,38 @@ export function DraftHub({ seasonId }: { seasonId: string }) {
                 }
               />
             ) : (
-              <LotteryWheel
-                odds={odds}
-                nextPick={nextPick}
-                disabled={draft.draftComplete}
-                onResult={handleResult}
-              />
+              <div className="flex w-full flex-col items-center gap-4">
+                {presenting && (
+                  <div className="text-center">
+                    <p className="eyebrow" style={{ color: 'var(--accent-2)' }}>
+                      Draft lottery
+                    </p>
+                    <p className="mt-1 text-2xl font-black tracking-[-0.02em] text-white">
+                      {draft.draftComplete
+                        ? 'Every pick is in'
+                        : `${FIELD_SIZE - picksMade} still in the barrel`}
+                    </p>
+                  </div>
+                )}
+                <LotteryWheel
+                  odds={odds}
+                  nextPick={nextPick}
+                  disabled={draft.draftComplete || Boolean(reveal)}
+                  soundOn={soundOn}
+                  onResult={handleResult}
+                />
+                {/* Present toggle sits on the stage so it's reachable in fullscreen. */}
+                <Button
+                  variant={presenting ? 'primary' : 'outline'}
+                  size="sm"
+                  icon="sparkle"
+                  onClick={togglePresent}
+                >
+                  {presenting ? 'Exit presentation' : 'Presentation mode'}
+                </Button>
+              </div>
             )}
-          </Card>
+          </div>
           <OddsPanel odds={odds} weighting={draft.state.weighting} onWeightingChange={draft.setWeighting} />
         </section>
       )}
@@ -234,18 +312,24 @@ export function DraftHub({ seasonId }: { seasonId: string }) {
         <section className="flex flex-col gap-3">
           <DraftBoard picks={draft.state.picks} standings={draft.standings} />
           {draft.draftComplete ? (
-            <Card className="on-dark dark-wash px-4 py-4 text-center">
-              <p className="eyebrow">Order locked</p>
-              <p className="mt-1 text-sm text-ink-dim">
-                Twelve picks drawn. Copy this order into ESPN and the weekend is officially over.
+            <Card className="on-dark dark-wash flex flex-col items-center gap-3 px-4 py-5 text-center">
+              <p className="eyebrow" style={{ color: 'var(--accent-2)' }}>
+                Order locked
               </p>
+              <p className="max-w-md text-sm text-white/70">
+                All {FIELD_SIZE} picks are in. Reveal the order one by one for the room, then copy it
+                into ESPN.
+              </p>
+              <Button variant="primary" size="lg" icon="sparkle" onClick={() => setShowFinal(true)}>
+                Reveal the draft order
+              </Button>
             </Card>
           ) : (
             <Card className="px-4 py-4">
               <p className="text-sm text-ink-dim">
-                {draft.state.picks.length === 0
-                  ? 'No picks drawn yet. Head to the lottery tab and spin for pick one.'
-                  : `Pick ${nextPick} is next. Spin again on the lottery tab.`}
+                {picksMade === 0
+                  ? 'No picks locked yet. Head to the lottery tab and spin the wheel.'
+                  : `${picksMade} of ${FIELD_SIZE} locked. Spin again on the lottery tab to draw the next team.`}
               </p>
             </Card>
           )}
@@ -255,13 +339,15 @@ export function DraftHub({ seasonId }: { seasonId: string }) {
       {reveal && (
         <PickReveal
           managerId={reveal.managerId}
-          pick={reveal.pick}
           chance={reveal.chance}
-          onDismiss={() => {
-            setReveal(null);
-            setTab('board');
-          }}
+          openPicks={draft.openPicks}
+          onChoose={handleChoose}
+          onCancel={() => setReveal(null)}
         />
+      )}
+
+      {showFinal && draft.draftComplete && (
+        <FinalReveal picks={draft.state.picks} soundOn={soundOn} onClose={() => setShowFinal(false)} />
       )}
     </div>
   );

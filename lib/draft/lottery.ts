@@ -17,16 +17,29 @@ import { FIELD_SIZE } from './scoring';
  */
 
 export const WEIGHTING_LABELS: Record<LotteryWeighting, string> = {
+  lottery: 'Lottery odds (house rules)',
   points: 'Points proportional',
   squared: 'Points weighted (steep)',
   rank: 'Rank table (NBA style)',
 };
 
 export const WEIGHTING_HINTS: Record<LotteryWeighting, string> = {
+  lottery:
+    'The house odds: 1st gets 30% at pick one, sliding down to 1% for last. Odds rise for everyone still in the barrel after each draw.',
   points: 'Entries scale directly with points. Closest ladder, flattest odds.',
   squared: 'Points are squared before entries are assigned. Winning the weekend matters more.',
   rank: 'Fixed entry counts by finishing position, ignoring the size of the gaps.',
 };
+
+/**
+ * The house lottery table: chance of the top pick by finishing position, 1st
+ * through 12th, exactly as agreed. These are the pick-one percentages; because
+ * a drawn team leaves the barrel and the rest re-normalise, everyone still
+ * waiting sees their chance rise on the next spin.
+ *
+ * Stored ×10 so the two 1.5% slots stay integers and the maths avoids floats.
+ */
+export const LOTTERY_ENTRY_TABLE = [300, 200, 150, 100, 70, 50, 40, 30, 20, 15, 15, 10];
 
 /** Entry counts by ladder position for the `rank` model, 1st through 12th. */
 export const RANK_ENTRY_TABLE = [140, 125, 110, 95, 80, 66, 54, 42, 32, 23, 15, 8];
@@ -44,6 +57,8 @@ export type OddsRow = {
 
 function entriesFor(row: DraftStandingRow, weighting: LotteryWeighting): number {
   switch (weighting) {
+    case 'lottery':
+      return LOTTERY_ENTRY_TABLE[row.rank - 1] ?? 1;
     case 'rank':
       return RANK_ENTRY_TABLE[row.rank - 1] ?? 1;
     case 'squared':

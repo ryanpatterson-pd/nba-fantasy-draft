@@ -9,7 +9,7 @@ import { getManager } from '@/lib/data/managers';
 import type { LotteryWeighting } from '@/lib/types';
 import { num, pct } from '@/lib/utils/format';
 
-const WEIGHTINGS: LotteryWeighting[] = ['points', 'squared', 'rank'];
+const WEIGHTINGS: LotteryWeighting[] = ['lottery', 'points', 'squared', 'rank'];
 
 /**
  * Lottery odds for the next spin, plus the weighting model that produced them.

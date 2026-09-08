@@ -247,7 +247,7 @@ export type DraftPick = {
   managerId: ManagerId;
 };
 
-export type LotteryWeighting = 'points' | 'squared' | 'rank';
+export type LotteryWeighting = 'lottery' | 'points' | 'squared' | 'rank';
 
 export type DraftNightState = {
   version: 2;
