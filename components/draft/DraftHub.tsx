@@ -9,6 +9,7 @@ import { LotteryWheel } from '@/components/draft/LotteryWheel';
 import { OddsPanel } from '@/components/draft/OddsPanel';
 import { PickReveal } from '@/components/draft/PickReveal';
 import { useDraftNight } from '@/components/draft/useDraftNight';
+import { LeagueLogo } from '@/components/layout/LeagueLogo';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -26,6 +27,7 @@ import {
   pointsRemaining,
 } from '@/lib/draft/scoring';
 import { getManager } from '@/lib/data/managers';
+import { getSeason } from '@/lib/data/seasons';
 import { num } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
 
@@ -47,6 +49,7 @@ const TABS: { value: Tab; label: string }[] = [
  */
 export function DraftHub({ seasonId }: { seasonId: string }) {
   const draft = useDraftNight(seasonId);
+  const seasonLabel = getSeason(seasonId)?.label ?? '';
   const [tab, setTab] = useState<Tab>('games');
   // A team has been drawn and is choosing a slot. Nothing is locked until they
   // confirm, so this holds only the drawn manager and their draw odds.
@@ -274,15 +277,18 @@ export function DraftHub({ seasonId }: { seasonId: string }) {
             ) : (
               <div className="flex w-full flex-col items-center gap-4">
                 {presenting && (
-                  <div className="text-center">
-                    <p className="eyebrow" style={{ color: 'var(--accent-2)' }}>
-                      Draft lottery
-                    </p>
-                    <p className="mt-1 text-2xl font-black tracking-[-0.02em] text-white">
-                      {draft.draftComplete
-                        ? 'Every pick is in'
-                        : `${FIELD_SIZE - picksMade} still in the barrel`}
-                    </p>
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <LeagueLogo variant="full" className="h-14 w-auto sm:h-20" />
+                    <div>
+                      <p className="eyebrow" style={{ color: 'var(--accent-2)' }}>
+                        Draft lottery · {seasonLabel}
+                      </p>
+                      <p className="mt-1 text-2xl font-black tracking-[-0.02em] text-white sm:text-4xl">
+                        {draft.draftComplete
+                          ? 'Every pick is in'
+                          : `${FIELD_SIZE - picksMade} still in the barrel`}
+                      </p>
+                    </div>
                   </div>
                 )}
                 <LotteryWheel
