@@ -117,6 +117,25 @@ export function longestWinStreak(matchups: Matchup[], managerId: string): number
   return best;
 }
 
+/** Longest run of consecutive losses. A draw ends a streak. */
+export function longestLossStreak(matchups: Matchup[], managerId: string): number {
+  const ordered = matchups
+    .filter((m) => m.homeId === managerId || m.awayId === managerId)
+    .sort((a, b) => a.week - b.week);
+
+  let best = 0;
+  let current = 0;
+  for (const game of ordered) {
+    if (loserOf(game) === managerId) {
+      current += 1;
+      best = Math.max(best, current);
+    } else {
+      current = 0;
+    }
+  }
+  return best;
+}
+
 export function scoresFor(matchups: Matchup[], managerId: string): number[] {
   const out: number[] = [];
   for (const game of matchups) {

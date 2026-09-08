@@ -121,6 +121,7 @@ export type AllTimeRecord = {
   highestWeek: number;
   lowestWeek: number;
   longestWinStreak: number;
+  longestLossStreak: number;
   regularSeasonCrowns: number;
   woodenSpoons: number;
   /** Championship-round record, e.g. 1-3. */

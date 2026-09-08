@@ -3,7 +3,7 @@ import { MATCHUPS, isPlayoffGame, matchupsForManager } from '@/lib/data/league';
 import { COMPLETED_SEASONS } from '@/lib/data/seasons';
 import type { AllTimeRecord, Matchup, SeasonRecord } from '@/lib/types';
 import { getSeasonRecords } from './season';
-import { longestWinStreak, scoresFor, tally, winRate, winnerOf } from './tally';
+import { longestLossStreak, longestWinStreak, scoresFor, tally, winRate, winnerOf } from './tally';
 
 /**
  * The all-time database.
@@ -85,6 +85,15 @@ function buildAllTime(): AllTimeRecord[] {
         0,
         ...COMPLETED_SEASONS.map((s) =>
           longestWinStreak(
+            games.filter((g) => g.seasonId === s.id),
+            managerId,
+          ),
+        ),
+      ),
+      longestLossStreak: Math.max(
+        0,
+        ...COMPLETED_SEASONS.map((s) =>
+          longestLossStreak(
             games.filter((g) => g.seasonId === s.id),
             managerId,
           ),

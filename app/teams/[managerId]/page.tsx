@@ -114,6 +114,7 @@ export default async function ManagerPage({ params }: { params: Promise<Params> 
         <MiniStat raised label="Highest week" value={num(career.highestWeek)} />
         <MiniStat raised label="Lowest week" value={num(career.lowestWeek)} />
         <MiniStat raised label="Longest win streak" value={`${career.longestWinStreak}W`} />
+        <MiniStat raised label="Longest losing streak" value={`${career.longestLossStreak}L`} />
         <MiniStat raised label="Minor premierships" value={String(career.regularSeasonCrowns)} />
         <MiniStat raised label="Wooden spoons" value={String(career.woodenSpoons)} />
         <MiniStat raised label="Seasons played" value={String(career.seasonsPlayed)} />
@@ -121,9 +122,6 @@ export default async function ManagerPage({ params }: { params: Promise<Params> 
             the All-time record card above. */}
         <MiniStat
           raised
-          // Lone final tile: span the full width on mobile so it doesn't leave
-          // an empty gap beside it. Normal single cell from sm up.
-          className="col-span-2 sm:col-span-1"
           label="Playoff record"
           value={
             playoffGames > 0
