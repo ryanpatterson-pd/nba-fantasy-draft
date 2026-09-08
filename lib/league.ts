@@ -20,7 +20,10 @@ export const LEAGUE = {
    */
   logos: {
     full: '/league-logos/hornpub-logo-full.png',
-    shield: '/league-logos/hornpub-logo-shield.png',
-    word: '/league-logos/hornpub-logo-word.png',
+    // Only the full lockup exists so far, so the shield/word variants point at
+    // it too. Drop dedicated crops in public/league-logos and update these
+    // paths when you have them.
+    shield: '/league-logos/hornpub-logo-full.png',
+    word: '/league-logos/hornpub-logo-full.png',
   },
 } as const;
