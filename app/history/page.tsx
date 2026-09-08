@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { PageHeader, PageShell } from '@/components/layout/PageHeader';
 import { SeasonTimeline } from '@/components/history/SeasonTimeline';
+import { LeaderStatCard } from '@/components/dashboard/LeaderStatCard';
 import { Avatar } from '@/components/ui/Avatar';
 import { Bar } from '@/components/ui/Bar';
 import { Card, CardHeader } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
-import { StatCard } from '@/components/ui/StatCard';
 import { getManager } from '@/lib/data/managers';
 import { COMPLETED_SEASONS } from '@/lib/data/seasons';
 import { ALL_TIME, HONOUR_ORDER, LEAGUE_TOTALS } from '@/lib/stats/all-time';
@@ -44,32 +44,31 @@ export default function HistoryPage() {
           '[&>*]:w-[85%] [&>*]:shrink-0 [&>*]:snap-start sm:[&>*]:w-auto',
         )}
       >
-        <StatCard
+        <LeaderStatCard
           label="Seasons archived"
           value={String(COMPLETED_SEASONS.length)}
-          unit={`${COMPLETED_SEASONS[0].label} – ${COMPLETED_SEASONS[COMPLETED_SEASONS.length - 1].label}`}
+          unit="seasons"
+          sub={`${COMPLETED_SEASONS[0].label} – ${COMPLETED_SEASONS[COMPLETED_SEASONS.length - 1].label}`}
           icon="calendar"
         />
-        <StatCard
+        <LeaderStatCard
           label="Different champions"
           value={String(LEAGUE_TOTALS.distinctChampions)}
-          unit={`of ${COMPLETED_SEASONS.length} seasons`}
+          sub={`of ${COMPLETED_SEASONS.length} seasons`}
           icon="crown"
         />
-        <StatCard
+        <LeaderStatCard
+          managerId={mostFinals.managerId}
           label="Most grand finals"
           value={String(mostFinals.finalsAppearances)}
-          unit={getManager(mostFinals.managerId).name}
+          unit="finals"
+          sub={`${getManager(mostFinals.managerId).name} · ${mostFinals.finalsRecord.wins}–${mostFinals.finalsRecord.losses} in finals`}
           icon="medal"
-          trend={{
-            value: `${mostFinals.finalsRecord.wins}–${mostFinals.finalsRecord.losses} in finals`,
-            direction: mostFinals.finalsRecord.wins >= mostFinals.finalsRecord.losses ? 'up' : 'down',
-          }}
         />
-        <StatCard
+        <LeaderStatCard
           label="Still waiting"
           value={String(ALL_TIME.filter((row) => row.titles === 0).length)}
-          unit="managers without a ring"
+          sub="managers without a ring"
           icon="clock"
         />
       </section>
