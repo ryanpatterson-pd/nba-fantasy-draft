@@ -3,13 +3,12 @@ import { PageHeader, PageShell } from '@/components/layout/PageHeader';
 import { SeasonTimeline } from '@/components/history/SeasonTimeline';
 import { LeaderStatCard } from '@/components/dashboard/LeaderStatCard';
 import { Avatar } from '@/components/ui/Avatar';
-import { Bar } from '@/components/ui/Bar';
-import { Card, CardHeader } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { getManager } from '@/lib/data/managers';
 import { COMPLETED_SEASONS } from '@/lib/data/seasons';
 import { ALL_TIME, HONOUR_ORDER, LEAGUE_TOTALS } from '@/lib/stats/all-time';
-import { num, pct } from '@/lib/utils/format';
+import { num } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
 
 export const metadata: Metadata = {
@@ -19,10 +18,6 @@ export const metadata: Metadata = {
 
 export default function HistoryPage() {
   const titleHolders = ALL_TIME.filter((row) => row.titles > 0).sort((a, b) => b.titles - a.titles);
-  const maxTitles = Math.max(1, ...titleHolders.map((row) => row.titles));
-  const nearlyMen = [...ALL_TIME]
-    .filter((row) => row.titles === 0 && row.finalsAppearances > 0)
-    .sort((a, b) => b.finalsAppearances - a.finalsAppearances);
   const mostFinals = HONOUR_ORDER.reduce((best, row) =>
     row.finalsAppearances > best.finalsAppearances ? row : best,
   );
@@ -73,75 +68,39 @@ export default function HistoryPage() {
         />
       </section>
 
-      <section className="grid grid-cols-[minmax(0,1fr)] gap-3 xl:grid-cols-[minmax(0,2.3fr)_minmax(0,1fr)]">
-        <div className="flex min-w-0 flex-col gap-3">
-          <SeasonTimeline />
+      {/* Championship-count strip: each title-holder with their mascot and ring
+          tally. The chips flex to fill the bar's width, so they spread evenly
+          across the desktop row and shrink as more champions are added; on
+          mobile they stack full-width beneath the label. */}
+      <Card className="on-dark bg-dark flex flex-col gap-3 border-transparent px-4 py-4 sm:flex-row sm:items-center sm:gap-4 sm:py-3.5">
+        <span className="flex shrink-0 items-center gap-1.5 text-[10px] font-black tracking-[1px] text-accent-2 uppercase sm:w-[112px]">
+          <Icon name="trophy" size={14} />
+          Championship count
+        </span>
+        <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:gap-2.5">
+          {titleHolders.map((row) => {
+            const manager = getManager(row.managerId);
+            return (
+              <span
+                key={row.managerId}
+                className="flex min-w-0 flex-1 items-center gap-2.5 rounded-tile border border-white/10 bg-white/[0.05] py-2 pr-3 pl-2"
+              >
+                <Avatar manager={manager} size="md" ring={false} />
+                <span className="min-w-0 flex-1 truncate text-[14px] font-extrabold tracking-[-0.015em] text-white">
+                  {manager.name}
+                </span>
+                <span className="tabular inline-flex shrink-0 items-center gap-1 rounded-full border border-accent/40 bg-accent/15 px-2.5 py-1 text-[13px] font-black text-accent-2">
+                  <Icon name="trophy" size={12} />
+                  {row.titles}
+                </span>
+              </span>
+            );
+          })}
         </div>
+      </Card>
 
-        <div className="flex min-w-0 flex-col gap-3">
-          <Card>
-            <CardHeader label="Championship count" meta="All time" />
-            <ul className="divide-y divide-line">
-              {titleHolders.map((row) => {
-                const manager = getManager(row.managerId);
-                return (
-                  <li key={row.managerId} className="flex items-center gap-3 px-4 py-3">
-                    <Avatar manager={manager} size="sm" />
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-ink">
-                        {manager.name}
-                      </span>
-                      <Bar
-                        value={row.titles}
-                        max={maxTitles}
-                        colour={manager.colours.primary}
-                        height={4}
-                        className="mt-1.5"
-                      />
-                    </span>
-                    <span className="inline-flex items-center gap-1 text-sm font-bold text-accent-deep">
-                      <Icon name="trophy" size={13} />
-                      {row.titles}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </Card>
-
-          <Card>
-            <CardHeader label="The nearly men" meta="Finals, no ring" />
-            {nearlyMen.length === 0 ? (
-              <p className="px-4 py-5 text-sm text-ink-mute">
-                Everyone who has reached a grand final has won one.
-              </p>
-            ) : (
-              <ul className="divide-y divide-line">
-                {nearlyMen.map((row) => {
-                  const manager = getManager(row.managerId);
-                  return (
-                    <li key={row.managerId} className="flex items-center gap-3 px-4 py-3">
-                      <Avatar manager={manager} size="sm" />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-semibold text-ink">
-                          {manager.name}
-                        </span>
-                        <span className="block truncate text-[0.7rem] text-ink-mute">
-                          {row.finalsAppearances} grand{' '}
-                          {row.finalsAppearances === 1 ? 'final' : 'finals'} · {pct(row.winPct)} win rate
-                        </span>
-                      </span>
-                      <span className="tabular text-sm font-semibold text-ink-dim">
-                        {row.playoffAppearances}/{row.seasonsPlayed}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </Card>
-        </div>
-      </section>
+      {/* Season timeline, full width. */}
+      <SeasonTimeline />
     </PageShell>
   );
 }

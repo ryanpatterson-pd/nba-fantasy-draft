@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ButtonLink } from '@/components/ui/Button';
+import { CountUp } from '@/components/ui/CountUp';
 import { MascotImage, mascotSrc } from '@/components/ui/MascotImage';
 import { Icon } from '@/components/ui/Icon';
 import { usePhotoViewer } from '@/components/ui/PhotoViewer';
@@ -161,7 +162,7 @@ export function ProfileHero({
                   {/* tracking-[0.01em] stops the en-dash in records like 76–32
                       from touching the digits at this size. */}
                   <span className="tabular text-[clamp(34px,4vw,48px)] leading-none font-black tracking-[0.01em] text-white">
-                    {stat.value}
+                    <CountUp value={stat.value} />
                   </span>
                   {stat.unit && (
                     <span className="text-[11px] font-bold tracking-[0.6px] text-white/55 uppercase">

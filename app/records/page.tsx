@@ -6,6 +6,8 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { CountUp } from '@/components/ui/CountUp';
+import { Reveal } from '@/components/ui/Reveal';
 import { findManager } from '@/lib/data/managers';
 import { COMPLETED_SEASONS } from '@/lib/data/seasons';
 import { LEAGUE_TOTALS } from '@/lib/stats/all-time';
@@ -41,8 +43,10 @@ export default function RecordsPage() {
           <section key={group.id} className="flex flex-col gap-3">
             <SectionHeader kicker={group.label} title={group.blurb} />
             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {entries.map((entry) => (
-                <RecordTile key={entry.id} entry={entry} />
+              {entries.map((entry, index) => (
+                <Reveal key={entry.id} delay={index * 50}>
+                  <RecordTile entry={entry} />
+                </Reveal>
               ))}
             </div>
           </section>
@@ -60,7 +64,7 @@ function RecordTile({ entry }: { entry: RecordEntry }) {
       <p className="label-xs">{entry.title}</p>
 
       <p className="tabular text-[2.4rem] leading-none font-extrabold text-ink">
-        {entry.value}
+        <CountUp value={entry.value} />
       </p>
 
       <div className="flex items-center gap-2.5">
