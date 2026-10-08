@@ -214,6 +214,12 @@ export type DraftGame = {
   /** Human-friendly slot, e.g. "Sat · 11:00". */
   slot: string;
   venue: string;
+  /**
+   * The slide background at public/draft-games/<id>.png already includes the
+   * game title baked into the artwork. When true, the presentation slide hides
+   * its own code-rendered eyebrow + title so they don't stack on the image.
+   */
+  titleInArt?: boolean;
 };
 
 /**

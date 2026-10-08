@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { Agm } from '@/components/fixtures/Agm';
 import { FixtureCard } from '@/components/fixtures/FixtureCard';
 import { Avatar } from '@/components/ui/Avatar';
 import { Card, CardHeader } from '@/components/ui/Card';
@@ -26,7 +27,7 @@ export type StandingsData = Record<
   { managerId: string; wins: number; losses: number; ties: number; pointsFor: number }[]
 >;
 
-type Tab = 'fixtures' | 'ladder';
+type Tab = 'fixtures' | 'ladder' | 'agm';
 /** Sentinel for "no team filter". */
 const ALL = '__all__';
 
@@ -63,12 +64,14 @@ export function UpcomingSeason({
         options={[
           { value: 'fixtures', label: 'Fixtures' },
           { value: 'ladder', label: 'Ladder' },
+          { value: 'agm', label: 'AGM' },
         ]}
       />
 
-      {tab === 'fixtures' ? (
+      {tab === 'fixtures' && (
         <FixturesTab rounds={rounds} managerIds={managerIds} seasonLabel={seasonLabel} />
-      ) : (
+      )}
+      {tab === 'ladder' && (
         <LadderTab
           conferences={conferences}
           standings={standings}
@@ -76,6 +79,7 @@ export function UpcomingSeason({
           seasonLabel={seasonLabel}
         />
       )}
+      {tab === 'agm' && <Agm seasonLabel={seasonLabel} />}
     </div>
   );
 }
