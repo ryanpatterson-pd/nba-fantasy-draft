@@ -8,9 +8,23 @@ import { buzz, playReveal } from '@/lib/draft/celebrate';
 import { drawFromOdds, rotationForSegment, wheelSegments, type OddsRow } from '@/lib/draft/lottery';
 import { cn } from '@/lib/utils/cn';
 
-const SPIN_MS = 5200;
+/**
+ * Each spin picks a random duration and a random number of full turns, so no
+ * two spins share the same motion. A fixed duration/turn count was what made
+ * the old wheel feel predictable — the eye learned the rhythm even though the
+ * winner was already random. Varying both breaks that read completely.
+ */
+const SPIN_MS_MIN = 4200;
+const SPIN_MS_MAX = 8200;
+const TURNS_MIN = 5;
+const TURNS_MAX = 10;
+
 /** Segments smaller than this are left unlabelled to avoid a wall of text. */
 const LABEL_THRESHOLD = 0.03;
+
+function randomBetween(min: number, max: number): number {
+  return min + Math.random() * (max - min);
+}
 
 /**
  * The HornPub lottery wheel — the centrepiece of draft night.
@@ -32,6 +46,7 @@ export function LotteryWheel({
   soundOn = true,
   onResult,
   onSpinStart,
+  beforeSpin,
   className,
 }: {
   odds: OddsRow[];
@@ -41,12 +56,23 @@ export function LotteryWheel({
   onResult: (managerId: string) => void;
   /** Fired the instant a spin begins, e.g. to dim the room / start a drumroll. */
   onSpinStart?: () => void;
+  /**
+   * Guard run when the spin button is pressed, before anything moves. Return
+   * false to cancel this spin — used by the house-rule protection prompt, which
+   * intercepts the press to offer the next pick to a protected manager first.
+   */
+  beforeSpin?: () => boolean;
   className?: string;
 }) {
   const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [announcement, setAnnouncement] = useState('');
+  // Duration of the spin currently running, and the live countdown shown under
+  // the wheel. Both are set fresh on every spin so neither is predictable.
+  const [spinMs, setSpinMs] = useState(SPIN_MS_MAX);
+  const [remainingMs, setRemainingMs] = useState(0);
   const timer = useRef<number | null>(null);
+  const countdown = useRef<number | null>(null);
 
   const segments = useMemo(() => wheelSegments(odds), [odds]);
 
@@ -68,6 +94,7 @@ export function LotteryWheel({
   useEffect(
     () => () => {
       if (timer.current) window.clearTimeout(timer.current);
+      if (countdown.current) window.clearInterval(countdown.current);
     },
     [],
   );
@@ -86,23 +113,48 @@ export function LotteryWheel({
   function spin() {
     if (spinning || disabled || odds.length === 0) return;
 
+    // Let the caller intercept before anything moves (protection prompt).
+    if (beforeSpin && beforeSpin() === false) return;
+
     const winnerId = drawFromOdds(odds, Math.random());
     const segment = segments.find((s) => s.managerId === winnerId);
     if (!winnerId || !segment) return;
 
+    // Fresh randomness every spin: duration, number of turns, and where inside
+    // the winning wedge the pointer settles. The winner itself was already
+    // drawn from the odds above — this only varies the motion, never the result.
+    const duration = Math.round(randomBetween(SPIN_MS_MIN, SPIN_MS_MAX));
+    const turns = Math.round(randomBetween(TURNS_MIN, TURNS_MAX));
+    const landFraction = Math.random();
+
     onSpinStart?.();
     buzz(30);
+    setSpinMs(duration);
+    setRemainingMs(duration);
     setSpinning(true);
     setAnnouncement('Spinning the wheel.');
-    setRotation((current) => rotationForSegment(segment, current, 7));
+    setRotation((current) => rotationForSegment(segment, current, turns, landFraction));
+
+    // Live countdown under the wheel, ticking toward zero as it slows.
+    if (countdown.current) window.clearInterval(countdown.current);
+    const startedAt = performance.now();
+    countdown.current = window.setInterval(() => {
+      const left = Math.max(0, duration - (performance.now() - startedAt));
+      setRemainingMs(left);
+      if (left <= 0 && countdown.current) {
+        window.clearInterval(countdown.current);
+        countdown.current = null;
+      }
+    }, 90);
 
     if (timer.current) window.clearTimeout(timer.current);
     timer.current = window.setTimeout(() => {
       setSpinning(false);
+      setRemainingMs(0);
       setAnnouncement(`${getManager(winnerId).name} drawn.`);
       playReveal(soundOn);
       onResult(winnerId);
-    }, SPIN_MS);
+    }, duration);
   }
 
   const canSpin = !spinning && !disabled && odds.length > 0;
@@ -155,7 +207,7 @@ export function LotteryWheel({
                 background: gradient,
                 transform: `rotate(${rotation}deg)`,
                 transition: spinning
-                  ? `transform ${SPIN_MS}ms cubic-bezier(0.15, 0.83, 0.02, 1)`
+                  ? `transform ${spinMs}ms cubic-bezier(0.15, 0.83, 0.02, 1)`
                   : 'none',
               }}
             >
@@ -230,6 +282,21 @@ export function LotteryWheel({
       >
         {spinning ? 'Spinning…' : odds.length === 0 ? 'Draft order complete' : 'Spin the wheel'}
       </Button>
+
+      {/* Spin countdown: how long this spin will run, ticking to zero. The
+          duration is random each spin, so this number genuinely varies. */}
+      <div
+        className={cn(
+          'flex items-center gap-2 text-sm font-bold transition-opacity duration-300',
+          spinning ? 'opacity-100' : 'opacity-0',
+        )}
+        aria-hidden={!spinning}
+      >
+        <span className="tabular text-[clamp(1.6rem,5vw,2.4rem)] font-black tracking-tight text-accent-deep">
+          {(remainingMs / 1000).toFixed(1)}
+        </span>
+        <span className="label-xs">seconds left</span>
+      </div>
 
       <p aria-live="polite" className="sr-only">
         {announcement}

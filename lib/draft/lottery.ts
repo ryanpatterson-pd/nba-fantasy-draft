@@ -138,13 +138,68 @@ export function wheelSegments(odds: OddsRow[]): WheelSegment[] {
 
 /**
  * Rotation (in degrees) needed to bring a segment under the pointer at the top
- * of the wheel, plus a few full turns for the spin itself.
+ * of the wheel, plus `turns` full turns for the spin itself.
+ *
+ * `landFraction` (0–1) chooses where *within* the segment the pointer settles,
+ * defaulting to the middle. Passing a random fraction means the wheel doesn't
+ * stop at the exact same spot every time it lands on a given manager, which
+ * removes the last tell that made the spin feel scripted. A small inset keeps
+ * it clear of the segment edges so the result is never ambiguous.
  */
-export function rotationForSegment(segment: WheelSegment, currentRotation: number, turns = 6): number {
+export function rotationForSegment(
+  segment: WheelSegment,
+  currentRotation: number,
+  turns = 6,
+  landFraction = 0.5,
+): number {
   const settled = ((currentRotation % 360) + 360) % 360;
+  const sweep = segment.endAngle - segment.startAngle;
+  // Clamp the landing point to the inner 80% of the wedge.
+  const inset = Math.min(0.1, sweep > 0 ? 6 / sweep : 0.1);
+  const frac = inset + Math.min(Math.max(landFraction, 0), 1) * (1 - 2 * inset);
+  const landAngle = segment.startAngle + sweep * frac;
   // Pointer sits at 0deg (12 o'clock); the wheel spins clockwise.
-  const needed = (360 - segment.midAngle - settled + 360) % 360;
+  const needed = (360 - landAngle - settled + 360) % 360;
   return currentRotation + turns * 360 + needed;
 }
 
 export const PICK_NUMBERS = Array.from({ length: FIELD_SIZE }, (_, i) => i + 1);
+
+/**
+ * House rule: a manager can never fall more than this many pick slots below
+ * their ladder finishing position. Finish 1st and you are protected from pick 6
+ * or lower; finish 2nd and you are protected from pick 7; and so on.
+ */
+export const MAX_SLOTS_BELOW_FINISH = 5;
+
+/**
+ * Before spinning for `nextPick`, check whether assigning that pick would push
+ * anyone still in the barrel to exactly their protection limit — i.e. the pick
+ * is `MAX_SLOTS_BELOW_FINISH` worse than their ladder finish.
+ *
+ * Returns the single manager who should be offered the pick (the one who
+ * finished highest, if more than one is at their limit), or null when nobody is
+ * protected on this pick. The caller then asks "give [name] pick N?" — yes locks
+ * it, no spins as normal.
+ *
+ * `standings` carries each manager's ladder `rank`; `remaining` are the ids
+ * still waiting on a pick.
+ */
+export function protectionCandidate(
+  standings: DraftStandingRow[],
+  remaining: ManagerId[],
+  nextPick: number,
+): { managerId: ManagerId; rank: number } | null {
+  const remainingSet = new Set(remaining);
+
+  const atLimit = standings
+    .filter((row) => remainingSet.has(row.managerId))
+    // The pick would be exactly the protection limit below their finish, or
+    // worse. In sequential drafting it can only ever reach the limit exactly,
+    // but `>=` keeps it correct if picks are ever skipped.
+    .filter((row) => nextPick - row.rank >= MAX_SLOTS_BELOW_FINISH)
+    .sort((a, b) => a.rank - b.rank);
+
+  if (atLimit.length === 0) return null;
+  return { managerId: atLimit[0].managerId, rank: atLimit[0].rank };
+}

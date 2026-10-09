@@ -84,16 +84,23 @@ const SCENES: Record<string, (props: SceneProps) => React.ReactNode> = {
   ),
 
   // 4 — Egg and Spoon: a spoon cradling an egg, with turn-around arrows.
-  'egg-and-spoon': ({ className }) => (
+  // 4 — Carrot Cutting: a carrot sliced in two with a knife and a scale.
+  'carrot-cut': ({ className }) => (
     <Frame className={className}>
       <Ground />
-      <ellipse cx="120" cy="86" rx="22" ry="14" stroke={ACCENT} strokeWidth="4" transform="rotate(-10 120 86)" />
-      <path d="M138 92l44 26" stroke={ACCENT} strokeWidth="4" />
-      <ellipse cx="118" cy="78" rx="13" ry="16" fill={ACCENT} fillOpacity="0.2" stroke={ACCENT} strokeWidth="3" />
-      <path d="M60 120a16 16 0 1 1 4 -11" stroke={ACCENT_2} strokeWidth="3" />
-      <path d="M60 100l5 9 9 -3" stroke={ACCENT_2} strokeWidth="3" />
-      <path d="M196 60a16 16 0 1 0 -4 11" stroke={ACCENT_2} strokeWidth="3" />
-      <path d="M196 80l-5 -9 -9 3" stroke={ACCENT_2} strokeWidth="3" />
+      {/* Two carrot halves, separated at the cut. */}
+      <g stroke={ACCENT} strokeWidth="4">
+        <path d="M66 118l-26 -8 30 -14z" fill={ACCENT} fillOpacity="0.18" />
+        <path d="M98 92l32 -14 10 24 -30 14z" fill={ACCENT} fillOpacity="0.18" />
+      </g>
+      {/* Leafy tops on the right half. */}
+      <path d="M134 80l10 -16M142 82l16 -12M138 76l2 -18" stroke={ACCENT_2} strokeWidth="3" />
+      {/* The knife mid-cut. */}
+      <path d="M78 60l20 44" stroke={ACCENT_2} strokeWidth="3" />
+      <path d="M72 54l10 -6 6 10 -10 6z" fill={ACCENT_2} stroke={ACCENT_2} strokeWidth="2" />
+      {/* A small balance scale, bottom-right. */}
+      <path d="M176 150v-18M164 132h24" stroke={ACCENT} strokeWidth="3" />
+      <path d="M164 132l-8 14h16z M188 132l-8 14h16z" stroke={ACCENT} strokeWidth="2.5" opacity="0.7" />
     </Frame>
   ),
 
@@ -124,17 +131,20 @@ const SCENES: Record<string, (props: SceneProps) => React.ReactNode> = {
     </Frame>
   ),
 
-  // 7 — Basketball Challenge: ball on a rim (workshopping, so lightly drawn).
-  basketball: ({ className }) => (
+  // 7 — Ping Pong Challenge: three stacks of two cups and a ball arcing in.
+  'ping-pong': ({ className }) => (
     <Frame className={className}>
-      <path d="M150 36v26" stroke={ACCENT} strokeWidth="4" />
-      <rect x="128" y="34" width="44" height="6" rx="3" fill={ACCENT} />
-      <path d="M132 62h36l-5 20h-26z" stroke={ACCENT} strokeWidth="3" />
-      <path d="M136 70h28M140 78h20" stroke={ACCENT} strokeWidth="1.6" opacity="0.5" />
-      <circle cx="96" cy="118" r="22" stroke={ACCENT} strokeWidth="4" />
-      <path d="M74 118h44M96 96v44" stroke={ACCENT} strokeWidth="2.5" opacity="0.7" />
-      <path d="M80 102c10 9 10 23 0 32M112 102c-10 9 -10 23 0 32" stroke={ACCENT} strokeWidth="2.5" opacity="0.7" />
-      <path d="M118 96q24 -20 32 -10" stroke={ACCENT_2} strokeWidth="3" strokeDasharray="4 7" opacity="0.7" />
+      <Ground />
+      {/* The arcing shot. */}
+      <path d="M38 70q50 -40 92 2" stroke={ACCENT_2} strokeWidth="3" strokeDasharray="4 7" opacity="0.7" />
+      <circle cx="38" cy="70" r="7" fill={ACCENT} />
+      {/* Three stacks of two cups across the far side. */}
+      {[112, 158, 204].map((x) => (
+        <g key={x} stroke={ACCENT} strokeWidth="3.5">
+          <path d={`M${x - 15} 96l4 20h22l4 -20z`} />
+          <path d={`M${x - 13} 118l4 22h18l4 -22z`} fill={ACCENT} fillOpacity="0.16" />
+        </g>
+      ))}
     </Frame>
   ),
 
@@ -153,19 +163,18 @@ const SCENES: Record<string, (props: SceneProps) => React.ReactNode> = {
     </Frame>
   ),
 
-  // 9 — Darts Challenge: a dartboard with three darts clustered.
-  darts: ({ className }) => (
+  // 9 — Pool Table Contest: a ball rolling toward the far cushion.
+  'pool-roll': ({ className }) => (
     <Frame className={className}>
-      <circle cx="120" cy="90" r="54" stroke={ACCENT} strokeWidth="4" />
-      <circle cx="120" cy="90" r="36" stroke={ACCENT} strokeWidth="2.5" opacity="0.6" />
-      <circle cx="120" cy="90" r="18" stroke={ACCENT} strokeWidth="2.5" opacity="0.6" />
-      <circle cx="120" cy="90" r="6" fill={ACCENT} />
-      <path d="M120 36v108M66 90h108" stroke={ACCENT} strokeWidth="1.4" opacity="0.3" />
-      <g stroke={ACCENT} strokeWidth="3">
-        <path d="M126 84l40 -26M166 58l-7 2 2 -8" />
-        <path d="M112 96l-42 20M70 116l8 -1 -2 8" />
-        <path d="M128 100l34 34M162 134l-1 -8 -8 1" />
-      </g>
+      {/* Table bed with a rail border and a corner pocket. */}
+      <rect x="30" y="48" width="180" height="96" rx="10" stroke={ACCENT} strokeWidth="4" fill={ACCENT} fillOpacity="0.06" />
+      <rect x="42" y="60" width="156" height="72" rx="4" stroke={ACCENT} strokeWidth="2" opacity="0.4" />
+      <circle cx="198" cy="60" r="7" fill={ACCENT} opacity="0.5" />
+      {/* The rolling ball and its path toward the far (right) end. */}
+      <path d="M60 100h118" stroke={ACCENT_2} strokeWidth="3" strokeDasharray="4 7" opacity="0.7" />
+      <circle cx="60" cy="100" r="9" stroke={ACCENT} strokeWidth="3.5" fill={ACCENT} fillOpacity="0.2" />
+      {/* Distance marker to the end cushion. */}
+      <path d="M178 92v16M190 92v16" stroke={ACCENT} strokeWidth="2" opacity="0.5" />
     </Frame>
   ),
 

@@ -8,6 +8,7 @@ import { GameCard } from '@/components/draft/GameCard';
 import { LotteryWheel } from '@/components/draft/LotteryWheel';
 import { OddsPanel } from '@/components/draft/OddsPanel';
 import { PickReveal } from '@/components/draft/PickReveal';
+import { ProtectionPrompt } from '@/components/draft/ProtectionPrompt';
 import { useDraftNight } from '@/components/draft/useDraftNight';
 import { LeagueLogo } from '@/components/layout/LeagueLogo';
 import { Badge } from '@/components/ui/Badge';
@@ -18,7 +19,7 @@ import { Icon } from '@/components/ui/Icon';
 import { Segmented } from '@/components/ui/Segmented';
 import { StatCard } from '@/components/ui/StatCard';
 import { DRAFT_GAMES } from '@/lib/data/draft-games';
-import { computeOdds } from '@/lib/draft/lottery';
+import { computeOdds, protectionCandidate } from '@/lib/draft/lottery';
 import {
   FIELD_SIZE,
   MAX_POSSIBLE_POINTS,
@@ -54,6 +55,10 @@ export function DraftHub({ seasonId }: { seasonId: string }) {
   // A team has been drawn and is choosing a slot. Nothing is locked until they
   // confirm, so this holds only the drawn manager and their draw odds.
   const [reveal, setReveal] = useState<{ managerId: string; chance: number | null } | null>(null);
+  // When set, the five-slot protection prompt is open for this manager/pick.
+  const [protect, setProtect] = useState<{ managerId: string; rank: number; pick: number } | null>(
+    null,
+  );
   const [soundOn, setSoundOn] = useState(true);
   const [presenting, setPresenting] = useState(false);
   const [showFinal, setShowFinal] = useState(false);
@@ -86,6 +91,25 @@ export function DraftHub({ seasonId }: { seasonId: string }) {
     },
     [draft, reveal],
   );
+
+  /**
+   * Pre-spin guard for the house five-slot protection rule. If assigning the
+   * next pick would push someone to their limit, open the prompt and cancel the
+   * spin; otherwise let the wheel spin normally.
+   */
+  const guardSpin = useCallback(() => {
+    if (nextPick === null) return true;
+    const candidate = protectionCandidate(draft.standings, draft.remainingIds, nextPick);
+    if (!candidate) return true;
+    setProtect({ managerId: candidate.managerId, rank: candidate.rank, pick: nextPick });
+    return false;
+  }, [draft.standings, draft.remainingIds, nextPick]);
+
+  /** Protection accepted: hand the protected manager the next pick directly. */
+  const giveProtectedPick = useCallback(() => {
+    if (protect) draft.assignPick(protect.managerId, protect.pick);
+    setProtect(null);
+  }, [draft, protect]);
 
   // Fullscreen presentation mode. Kept in sync with the browser's own state so
   // pressing Escape (which exits fullscreen) also drops out of presenting.
@@ -294,9 +318,10 @@ export function DraftHub({ seasonId }: { seasonId: string }) {
                 <LotteryWheel
                   odds={odds}
                   nextPick={nextPick}
-                  disabled={draft.draftComplete || Boolean(reveal)}
+                  disabled={draft.draftComplete || Boolean(reveal) || Boolean(protect)}
                   soundOn={soundOn}
                   onResult={handleResult}
+                  beforeSpin={guardSpin}
                 />
                 {/* Present toggle sits on the stage so it's reachable in fullscreen. */}
                 <Button
@@ -340,6 +365,16 @@ export function DraftHub({ seasonId }: { seasonId: string }) {
             </Card>
           )}
         </section>
+      )}
+
+      {protect && (
+        <ProtectionPrompt
+          managerId={protect.managerId}
+          rank={protect.rank}
+          pick={protect.pick}
+          onGive={giveProtectedPick}
+          onSpin={() => setProtect(null)}
+        />
       )}
 
       {reveal && (
