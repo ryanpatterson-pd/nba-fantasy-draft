@@ -117,17 +117,20 @@ const SCENES: Record<string, (props: SceneProps) => React.ReactNode> = {
     </Frame>
   ),
 
-  // 6 — Kahoot: a quiz screen with answer shapes and a timer.
-  kahoot: ({ className }) => (
+  // 6 — Putting Challenge: a putter, a ball and the hole with a flag.
+  putting: ({ className }) => (
     <Frame className={className}>
-      <rect x="52" y="38" width="136" height="86" rx="10" stroke={ACCENT} strokeWidth="4" />
-      <path d="M70 60h100" stroke={ACCENT} strokeWidth="4" opacity="0.5" />
-      <path d="M78 88l10 -14 10 14z" fill={ACCENT} />
-      <rect x="116" y="78" width="18" height="18" rx="3" fill={ACCENT} fillOpacity="0.4" stroke={ACCENT} strokeWidth="2.5" />
-      <circle cx="152" cy="87" r="9" stroke={ACCENT} strokeWidth="3" />
-      <path d="M120 124v12M100 136h40" stroke={ACCENT} strokeWidth="3" />
-      <circle cx="120" cy="150" r="12" stroke={ACCENT_2} strokeWidth="3" />
-      <path d="M120 150V143M120 150l6 4" stroke={ACCENT_2} strokeWidth="2.5" />
+      <Ground />
+      {/* The hole with a flag, right side. */}
+      <ellipse cx="186" cy="142" rx="16" ry="5" stroke={ACCENT} strokeWidth="3" fill={ACCENT} fillOpacity="0.2" />
+      <path d="M186 142V58" stroke={ACCENT} strokeWidth="4" />
+      <path d="M186 60h32l-8 9 8 9h-32" fill={ACCENT} fillOpacity="0.2" stroke={ACCENT} strokeWidth="3" />
+      {/* The ball and its rolling path toward the hole. */}
+      <path d="M70 140q46 -16 100 0" stroke={ACCENT_2} strokeWidth="3" strokeDasharray="4 7" opacity="0.7" />
+      <circle cx="70" cy="140" r="8" stroke={ACCENT} strokeWidth="3.5" fill={ACCENT} fillOpacity="0.15" />
+      {/* The putter, mid-stroke behind the ball. */}
+      <path d="M44 48l12 86" stroke={ACCENT} strokeWidth="4" />
+      <path d="M50 132h22" stroke={ACCENT} strokeWidth="5" />
     </Frame>
   ),
 
